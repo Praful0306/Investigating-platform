@@ -95,7 +95,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Verify:** `npx vitest run tests/api/auth.test.js && npm test`.
 
 ## T-13 · Client scaffold
-- [ ] Tailwind v4 tokens, fonts, `App.jsx` routes with lazy pages (placeholders), `Layout`, `NavBar`, UI kit, `api/http.js`, `api/cases.js`, `api/mock/*`, `lib/errors.js`, `config/difficulty.js`, `hooks/useReducedMotion.js`, test setup. Spec: `04-frontend.md` §1–3.
+- [x] Tailwind v4 tokens, fonts, `App.jsx` routes with lazy pages (placeholders), `Layout`, `NavBar`, UI kit, `api/http.js`, `api/cases.js`, `api/mock/*`, `lib/errors.js`, `config/difficulty.js`, `hooks/useReducedMotion.js`, test setup. Spec: `04-frontend.md` §1–3.
 - **Verify:** `VITE_USE_MOCK=true npm run dev` → every route renders a placeholder; `npm run lint && npm run build`.
 
 ## T-14 · Home + Create

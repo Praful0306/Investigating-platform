@@ -8,12 +8,15 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "dev:mock": "vite --mode mock",
+    "build:mock": "vite build --mode mock"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "axios": "^1.21.0",
     "gsap": "^3.15.0",
+    "lucide-react": "^1.65.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.5"

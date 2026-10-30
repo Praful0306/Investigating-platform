@@ -8,3 +8,4 @@ playwright-report/
 test-results/
 .vercel
 ai-mystery-room-specs.zip
+.claude/
