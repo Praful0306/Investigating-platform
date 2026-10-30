@@ -4,7 +4,10 @@ import { MemoryRouter } from 'react-router-dom';
 import { AppRoutes, Providers } from './App.jsx';
 
 // pages that call the API (Home pings /health) must not make real network requests in tests
-vi.mock('./api/cases.js', () => ({ health: vi.fn().mockResolvedValue({ ok: true }), createCase: vi.fn() }));
+vi.mock('./api/cases.js', async () => {
+  const { PUBLIC_CASE_EXAMPLE } = await import('./api/mock/fixtures.js');
+  return { health: vi.fn().mockResolvedValue({ ok: true }), createCase: vi.fn(), getCase: vi.fn().mockResolvedValue(PUBLIC_CASE_EXAMPLE) };
+});
 
 const at = (path) =>
   render(
@@ -25,7 +28,7 @@ describe('routes', () => {
   it.each([
     ['/', /every case is new/i, 'AI Mystery Room — every case is new'],
     ['/create', 'Create a mystery', 'Create a mystery · AI Mystery Room'],
-    ['/case/6720c1f0a1b2c3d4e5f60718', 'Investigation room', 'Investigation room · AI Mystery Room'],
+    ['/case/6720c1f0a1b2c3d4e5f60718', 'The Silent Sitar', 'The Silent Sitar · AI Mystery Room'],
     ['/case/6720c1f0a1b2c3d4e5f60718/accuse', 'Make your accusation', 'Make your accusation · AI Mystery Room'],
     ['/case/6720c1f0a1b2c3d4e5f60718/result', 'Case result', 'Case result · AI Mystery Room'],
     ['/login', 'Sign in', 'Sign in · AI Mystery Room'],
@@ -47,7 +50,7 @@ describe('routes', () => {
   });
 
   it('case pages receive their :id', async () => {
-    at('/case/abc123');
+    at('/case/abc123/accuse');
     expect(await screen.findByText(/case id: abc123/i)).toBeInTheDocument();
   });
 

@@ -103,7 +103,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Verify:** mock mode: generate easy → lands on `/case/:id`. `npm test -- CreateMystery`.
 
 ## T-15 · Investigation
-- [ ] `pages/Investigation.jsx`, `hooks/useCase.js`, `components/case/{CaseHeader,StoryPanel,SuspectCard,ClueCard,HintsPanel}.jsx`, `Investigation.test.jsx`. Spec: §4.3.
+- [x] `pages/Investigation.jsx`, `hooks/useCase.js`, `components/case/{CaseHeader,StoryPanel,SuspectCard,ClueCard,HintsPanel}.jsx`, `Investigation.test.jsx`. Spec: §4.3.
 - **Verify:** mock mode: examine clues, take hints until disabled, progress updates; `npm test -- Investigation`; check 360 px width.
 
 ## T-16 · Accusation + Results
