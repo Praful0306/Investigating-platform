@@ -64,7 +64,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Done when:** leak assertions pass; `toResult` throws for active cases.
 
 ## T-07 · AI service core (no network)
-- [ ] `src/services/ai/{index,prompt,schema,validate}.js`, `providers/mock.js`, tests `validate`, `ai-service`, `prompt`. Spec: `02-backend.md` §4.1–4.5, mock in §4.6.
+- [x] `src/services/ai/{index,prompt,schema,validate}.js`, `providers/mock.js`, tests `validate`, `ai-service`, `prompt`. Spec: `02-backend.md` §4.1–4.5, mock in §4.6.
 - **Verify:** `npx vitest run tests/unit/validate.test.js tests/unit/ai-service.test.js tests/unit/prompt.test.js`.
 - **Done when:** every bullet in "Verify T-07" is a passing test.
 

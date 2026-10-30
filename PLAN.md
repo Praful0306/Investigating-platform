@@ -150,3 +150,12 @@ Cut in order: 3D hero → leaderboard/share → auth + history → Turnstile →
 **T-03 done (30 Oct).** Notes: `tests/helpers/db.js` exports `useMemoryDb()` (called per test file) instead of a global setup that boots Mongo for every file — keeps unit tests fast. Added `tests/unit/error.test.js` (proves Express 5 forwards async throws, no stack/message leak). Body-parser errors (bad JSON / >10kb) map to 400 `VALIDATION_ERROR`. `CROSS_SITE_COOKIES` added to env (gap G1). Helmet, CORS, logger, limiters, 415 guard are deliberately left for T-11 (marked spot in `app.js`).
 
 **Phase 1 done (T-03–T-06, 30 Oct).** 58 server tests green. Each secrecy guard was mutation-checked (removing `select:false` / `toJSON` strip / using a leaky serializer makes tests fail). Test fixtures live in `server/tests/helpers/fixtures.js` (reuse for API/security tests). `git log` has one commit per task, author `praful`, nothing pushed. Next: Phase 2 (T-07 AI service core with mock provider).
+
+**T-07 done (30 Oct).** 130 server tests green. Deviations from the spec's reference code (all tested, SPEC contract unchanged):
+- Name checks (explanation / hints / story give-away) use **whole-word, Unicode-aware** matching instead of substring, so a culprit "Ann" doesn't reject a hint saying "annual"; short first names (≤2 chars) fall back to the full name.
+- `sanitizePremise` collapses **any run of 3+ quotes** (spec's `"""`→`"` lets `"""""` re-form a delimiter and break out of the prompt block).
+- Added a per-attempt **timeout race** (spec only passes an AbortSignal, so a provider that ignores it would hang the request).
+- Removed the spec's redundant `if (attempts >= maxAttempts) break;` (the `while` guard already covers it).
+- Zod mirror also enforces the Mongoose max lengths (over-long AI text is retried instead of failing on save); strings are re-validated after HTML stripping; empty-after-strip is an error.
+- `ProviderError(message, status, retryable)` lives in `src/utils/provider-error.js`; mock exposes `calls` and `name` for tests.
+- 9 mutation checks (script kept outside the repo) prove the tests catch each break. Next: T-08 real providers (needs Praful's Gemini key for the live run).
