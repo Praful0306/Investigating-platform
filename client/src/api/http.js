@@ -8,6 +8,22 @@ export const http = axios.create({
   timeout: 90000,
 });
 
+// Signed-in players prove who they are with their Firebase ID token (SPEC §5.1). The auth layer registers a function that
+// returns the current token (or null for a guest); it is asked on every request, so a refreshed token is always used.
+// A token that cannot be fetched must never break the request: it simply goes out as a guest.
+let tokenProvider = null;
+export function setAuthTokenProvider(fn) {
+  tokenProvider = fn;
+}
+http.interceptors.request.use(async (config) => {
+  if (!tokenProvider) return config;
+  try {
+    const token = await tokenProvider();
+    if (token) config.headers.set('Authorization', `Bearer ${token}`);
+  } catch { /* no token: carry on as a guest */ }
+  return config;
+});
+
 const text = (value, fallback) => (typeof value === 'string' && value ? value : fallback);
 
 // Flattens anything that can go wrong into { status, code, message, details? }. Never throws, never leaks HTML or stacks.

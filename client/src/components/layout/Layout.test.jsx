@@ -2,17 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { Providers } from '../../App.jsx';
 import { Layout } from './Layout.jsx';
 
 const shell = (path = '/create') =>
   render(
     <MemoryRouter initialEntries={[path]}>
+      <Providers>
       <Routes>
         <Route element={<Layout />}>
           <Route path="create" element={<h1>Create page</h1>} />
           <Route path="history" element={<h1>History page</h1>} />
         </Route>
       </Routes>
+      </Providers>
     </MemoryRouter>,
   );
 

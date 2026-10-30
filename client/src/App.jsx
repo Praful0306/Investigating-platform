@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/layout/Layout.jsx';
 import { ToastProvider } from './components/ui/Toast.jsx';
+import { AuthProvider } from './context/AuthContext.jsx';
 
 // Each page is its own chunk, so the first paint only downloads the shell and the page being visited.
 const Home = lazy(() => import('./pages/Home.jsx'));
@@ -17,7 +18,11 @@ const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 const Kit = import.meta.env.DEV ? lazy(() => import('./pages/Kit.jsx')) : null;
 
 export function Providers({ children }) {
-  return <ToastProvider>{children}</ToastProvider>;
+  return (
+    <ToastProvider>
+      <AuthProvider>{children}</AuthProvider>
+    </ToastProvider>
+  );
 }
 
 // Routes only, so tests can mount them inside a MemoryRouter.

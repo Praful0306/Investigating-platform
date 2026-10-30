@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router-dom';
 import { cn } from '../../lib/cn.js';
+import { AccountMenu } from './AccountMenu.jsx';
 import { LogoMark } from './LogoMark.jsx';
 
 // NavLink sets aria-current="page" on the active link by itself.
@@ -23,9 +24,10 @@ export function NavBar() {
           <LogoMark className="size-8 text-amber" />
           <span className="hidden whitespace-nowrap font-display text-lg font-bold tracking-tight min-[420px]:inline">AI Mystery Room</span>
         </Link>
-        <ul className="flex items-center gap-1">
+        <ul className="flex items-center gap-0.5 sm:gap-1">
           <li><NavLink to="/create" className={linkClass}>New mystery</NavLink></li>
           <li><NavLink to="/history" className={linkClass}>My cases</NavLink></li>
+          <li className="ml-1"><AccountMenu /></li>
         </ul>
       </nav>
     </header>

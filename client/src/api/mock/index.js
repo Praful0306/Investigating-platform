@@ -150,6 +150,11 @@ export async function listCases() {
   return [...docs.values()].reverse().sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0)).map(toSummary).slice(0, 50);
 }
 
+export async function startSession() {
+  await wait();
+  return { user: { id: 'mock-user', email: null, displayName: 'Mock detective' }, claimed: 0 };
+}
+
 export async function health() {
   await wait();
   return { ok: true, db: 'up', time: new Date().toISOString() };

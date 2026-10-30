@@ -3,6 +3,9 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { Providers } from '../App.jsx';
+import { ToastProvider } from '../components/ui/Toast.jsx';
+import { AuthProvider } from '../context/AuthContext.jsx';
+import { DANA, fakeBackend } from '../test/auth.jsx';
 import Results from './Results.jsx';
 
 vi.mock('../api/cases.js', async () => {
@@ -11,7 +14,7 @@ vi.mock('../api/cases.js', async () => {
   return {
     createCase: vi.fn(m.createCase), getCase: vi.fn(m.getCase), discoverClue: vi.fn(m.discoverClue),
     requestHint: vi.fn(m.requestHint), accuse: vi.fn(m.accuse), getResult: vi.fn(m.getResult),
-    listCases: vi.fn(m.listCases), health: vi.fn(m.health),
+    listCases: vi.fn(m.listCases), health: vi.fn(m.health), startSession: vi.fn().mockResolvedValue({ claimed: 0 }),
   };
 });
 const api = await import('../api/cases.js');
@@ -239,6 +242,33 @@ describe('Results: where the data comes from', () => {
     show(created);
     expect(await screen.findByRole('heading', { level: 2, name: title })).toBeInTheDocument();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+  });
+});
+
+describe('Results: My cases', () => {
+  const withAccount = async (backend) => {
+    const { created } = await play();
+    render(
+      <MemoryRouter initialEntries={[`/case/${created.id}/result`]}>
+        <ToastProvider>
+          <AuthProvider loader={async () => backend}>
+            <Routes><Route path="/case/:id/result" element={<Results />} /></Routes>
+          </AuthProvider>
+        </ToastProvider>
+      </MemoryRouter>,
+    );
+    await loaded();
+  };
+
+  it('a signed-in player gets a My cases button to their history', async () => {
+    await withAccount(fakeBackend(DANA));
+    expect(await screen.findByRole('link', { name: /my cases/i })).toHaveAttribute('href', '/history');
+  });
+
+  it('a guest does not (it is for accounts)', async () => {
+    await withAccount(fakeBackend(null));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByRole('link', { name: /my cases/i })).toBeNull();
   });
 });
 

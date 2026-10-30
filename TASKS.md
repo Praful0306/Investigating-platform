@@ -111,7 +111,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Verify:** mock mode full flow correct + incorrect; `npm test`.
 
 ## T-17 · Auth UI + History (Tier 2)
-- [ ] `auth/` (Firebase + mock backend), `context/AuthContext.jsx`, `pages/{Login,Register,History}.jsx`, NavBar states, Results "My cases". Spec: §4.6.
+- [x] `auth/` (Firebase + mock backend), `context/AuthContext.jsx`, `pages/{Login,Register,History}.jsx`, NavBar states, Results "My cases". Spec: §4.6.
 - **Verify:** mock mode: create account → play → History lists case → sign out → sign in → still listed; with a real Firebase project: same flow, plus Google.
 
 ## T-18 · Motion & polish

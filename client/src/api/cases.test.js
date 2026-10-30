@@ -21,6 +21,13 @@ describe('real API calls', () => {
     expect(s.mock.calls[1][0].data).not.toHaveProperty('turnstileToken');
   });
 
+  it('startSession posts to /auth/session and returns who you are and how many cases were claimed', async () => {
+    const body = { user: { id: 'u1', email: 'a@b.co', displayName: 'A' }, claimed: 2 };
+    const s = spy(body);
+    expect(await api.startSession()).toEqual(body);
+    expect(s).toHaveBeenCalledWith({ method: 'post', url: '/auth/session' });
+  });
+
   it('getCase unwraps `case`', async () => {
     const s = spy({ case: { id: '1' } });
     expect(await api.getCase('1')).toEqual({ id: '1' });
@@ -102,6 +109,7 @@ describe('mock mode (VITE_USE_MOCK=true or --mode mock)', () => {
     expect((await cases.accuse(created.id, 's2')).verdict).toBe('correct');
     expect((await cases.getResult(created.id)).caseId).toBe(created.id);
     expect(await cases.listCases()).toHaveLength(1);
+    expect((await cases.startSession()).claimed).toBe(0);
     expect((await cases.health()).ok).toBe(true);
     expect(request).not.toHaveBeenCalled();
     mock.__reset();

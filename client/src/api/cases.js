@@ -52,6 +52,12 @@ export async function listCases() {
   return (await call({ method: 'get', url: '/cases' })).cases;
 }
 
+// After a sign-in: hands this browser's guest cases to the account. -> { user, claimed }
+export async function startSession() {
+  if (useMock) return (await mock()).startSession();
+  return call({ method: 'post', url: '/auth/session' });
+}
+
 export async function health() {
   if (useMock) return (await mock()).health();
   return call({ method: 'get', url: '/health' });

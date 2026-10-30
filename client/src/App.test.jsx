@@ -9,6 +9,7 @@ vi.mock('./api/cases.js', async () => {
   return {
     health: vi.fn().mockResolvedValue({ ok: true }), createCase: vi.fn(),
     getCase: vi.fn().mockResolvedValue(PUBLIC_CASE_EXAMPLE), getResult: vi.fn().mockResolvedValue(RESULT_EXAMPLE), accuse: vi.fn(),
+    listCases: vi.fn().mockResolvedValue([]), startSession: vi.fn().mockResolvedValue({ claimed: 0 }),
   };
 });
 const api = await import('./api/cases.js');

@@ -1,12 +1,13 @@
 import { useRef } from 'react';
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
-import { Check, Plus, Share2, X } from 'lucide-react';
+import { Check, FolderOpen, Plus, Share2, X } from 'lucide-react';
 import { CaseError } from '../components/case/CaseError.jsx';
 import { ScoreBreakdown } from '../components/case/ScoreBreakdown.jsx';
 import { Badge } from '../components/ui/Badge.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Skeleton } from '../components/ui/Skeleton.jsx';
 import { useToast } from '../components/ui/useToast.js';
+import { useAuth } from '../context/useAuth.js';
 import { DIFFICULTY } from '../config/difficulty.js';
 import { useDocumentTitle } from '../hooks/useDocumentTitle.js';
 import { useReducedMotion } from '../hooks/useReducedMotion.js';
@@ -66,6 +67,7 @@ export default function Results() {
   const location = useLocation();
   const { data, loading, error, refresh } = useResult(id, location.state?.result);
   const { toast } = useToast();
+  const { status: authStatus } = useAuth();
   const reduced = useReducedMotion();
   const root = useRef(null);
   useDocumentTitle('Case result');
@@ -170,6 +172,9 @@ export default function Results() {
 
       <div data-reveal className="mt-10 flex flex-wrap items-center gap-4">
         <Button as={Link} to="/create" size="lg"><Plus aria-hidden="true" className="size-5" /> New mystery</Button>
+        {authStatus === 'signedIn' && (
+          <Button as={Link} to="/history" variant="ghost" size="lg"><FolderOpen aria-hidden="true" className="size-5" /> My cases</Button>
+        )}
         <Button variant="ghost" size="lg" onClick={share}><Share2 aria-hidden="true" className="size-5" /> Share</Button>
       </div>
     </div>

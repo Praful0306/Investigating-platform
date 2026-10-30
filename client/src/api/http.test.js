@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import axios, { AxiosError } from 'axios';
-import { http, toApiError } from './http.js';
+import { http, setAuthTokenProvider, toApiError } from './http.js';
 
 const withResponse = (status, data) => {
   const err = new AxiosError('Request failed', 'ERR_BAD_REQUEST', undefined, {}, { status, data, headers: {}, config: {} });
@@ -12,6 +12,53 @@ describe('http client', () => {
     expect(http.defaults.withCredentials).toBe(true);
     expect(http.defaults.baseURL).toBe('/api');
     expect(http.defaults.timeout).toBe(90000);
+  });
+});
+
+// the request as it would leave the browser: a stand-in adapter reports the headers instead of using the network
+const sent = (config = {}) => {
+  let seen;
+  const adapter = async (c) => { seen = c; return { data: {}, status: 200, statusText: 'OK', headers: {}, config: c }; };
+  return http.request({ url: '/x', adapter, ...config }).then(() => seen);
+};
+
+describe('sign-in token on requests', () => {
+  afterEach(() => setAuthTokenProvider(null));
+
+  it('a signed-in player sends their ID token as a Bearer header', async () => {
+    setAuthTokenProvider(async () => 'id-token-123');
+    expect((await sent()).headers.get('Authorization')).toBe('Bearer id-token-123');
+  });
+
+  it('a guest sends no Authorization header at all', async () => {
+    expect((await sent()).headers.has('Authorization')).toBe(false);
+    setAuthTokenProvider(async () => null);
+    expect((await sent()).headers.has('Authorization')).toBe(false);
+  });
+
+  it('asks for the token on every request, so a refreshed token is picked up', async () => {
+    const tokens = ['t1', 't2'];
+    setAuthTokenProvider(async () => tokens.shift());
+    expect((await sent()).headers.get('Authorization')).toBe('Bearer t1');
+    expect((await sent()).headers.get('Authorization')).toBe('Bearer t2');
+  });
+
+  it('a token that cannot be fetched never breaks the request: it goes out as a guest', async () => {
+    setAuthTokenProvider(async () => { throw new Error('offline'); });
+    const config = await sent();
+    expect(config.headers.has('Authorization')).toBe(false);
+  });
+
+  it('the token travels in the header only, never in the address or the body', async () => {
+    setAuthTokenProvider(async () => 'id-token-123');
+    const config = await sent({ method: 'post', data: { a: 1 }, params: { b: 2 } });
+    expect(JSON.stringify([config.url, config.params, config.data])).not.toContain('id-token-123');
+  });
+
+  it('clearing the provider stops sending the token (after sign-out)', async () => {
+    setAuthTokenProvider(async () => 'id-token-123');
+    setAuthTokenProvider(null);
+    expect((await sent()).headers.has('Authorization')).toBe(false);
   });
 });
 
