@@ -50,7 +50,7 @@ const CaseSchema = new Schema({
     default: null,
   },
   playerId: { type: String, required: true, index: true },
-  userId: { type: Schema.Types.ObjectId, ref: 'User', default: null, index: true },
+  userId: { type: String, default: null, index: true }, // the Firebase uid of the signed-in owner
   ai: { type: { provider: String, model: String, attempts: Number, latencyMs: Number }, select: false },
   completedAt: { type: Date, default: null },
 }, { timestamps: true, strict: true });

@@ -18,6 +18,13 @@ export async function loadOwned(id, { playerId, user }, { withSolution = false }
   return doc;
 }
 
+// After a sign-in: the cases this browser made as a guest become the account's. Only cases nobody owns are touched,
+// and only the ones carrying THIS browser's own player id, so nothing can be taken from another person.
+export async function claimGuestCases({ playerId, userId }) {
+  const { modifiedCount } = await Case.updateMany({ playerId, userId: null }, { $set: { userId } });
+  return modifiedCount;
+}
+
 export function listCases({ playerId, user }) {
   return Case.find(user ? { userId: user.id } : { playerId }).sort({ createdAt: -1 }).limit(50).lean();
 }

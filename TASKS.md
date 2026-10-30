@@ -91,7 +91,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Verify:** `npm test` (all green) + secret grep commands in `03-security.md` §5.
 
 ## T-12 · Auth + history (Tier 2)
-- [ ] `src/services/firebase-token.js`, `src/routes/auth.js` (`POST /session`), `src/middleware/auth.js`, `GET /api/cases` for logged-in users, claim on sign-in, `tests/api/auth.test.js`; remove the unused `User` model, `bcryptjs`, `jsonwebtoken` (SPEC v1.1.0: Firebase Authentication).
+- [x] `src/services/firebase-token.js`, `src/routes/auth.js` (`POST /session`), `src/middleware/auth.js`, `GET /api/cases` for logged-in users, claim on sign-in, `tests/api/auth.test.js`; remove the unused `User` model, `bcryptjs`, `jsonwebtoken` (SPEC v1.1.0: Firebase Authentication).
 - **Verify:** `npx vitest run tests/api/auth.test.js && npm test`.
 
 ## T-13 · Client scaffold

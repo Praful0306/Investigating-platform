@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { Case } from '../../src/models/Case.js';
-import { User } from '../../src/models/User.js';
 import { sampleCase, SECRET } from '../helpers/fixtures.js';
 import { useMemoryDb } from '../helpers/db.js';
 
@@ -49,24 +48,12 @@ describe('Case model', () => {
   });
 });
 
-describe('User model', () => {
-  it('lowercases/trims email, hides passwordHash, strips it from JSON', async () => {
-    const u = await User.create({ email: '  Praful@Example.COM ', passwordHash: 'hash', displayName: 'Praful' });
-    expect(u.email).toBe('praful@example.com');
-    const plain = await User.findById(u._id);
-    expect(plain.passwordHash).toBeUndefined();
-    const full = await User.findById(u._id).select('+passwordHash');
-    expect(full.passwordHash).toBe('hash');
-    expect(JSON.stringify(full)).not.toContain('passwordHash');
-  });
-
-  it('enforces unique email', async () => {
-    await User.init();
-    await User.create({ email: 'a@b.co', passwordHash: 'h', displayName: 'Aa' });
-    await expect(User.create({ email: 'A@B.co', passwordHash: 'h', displayName: 'Bb' })).rejects.toMatchObject({ code: 11000 });
-  });
-
-  it('rejects a 1-char displayName', async () => {
-    await expect(new User({ email: 'a@b.co', passwordHash: 'h', displayName: 'A' }).validate()).rejects.toThrow();
+describe('Case.userId', () => {
+  it('holds a Firebase uid as a plain string, and defaults to null for guests', async () => {
+    const uid = 'xT3kLm9Qe2Zr8PvB0aYhWcNd5uG1';
+    const owned = await Case.create({ ...sampleCase(), userId: uid });
+    expect((await Case.findById(owned._id)).userId).toBe(uid);
+    const guest = await Case.create(sampleCase());
+    expect((await Case.findById(guest._id)).userId).toBeNull();
   });
 });

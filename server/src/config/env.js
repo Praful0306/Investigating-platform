@@ -14,7 +14,7 @@ const Env = z.object({
   OPENAI_COMPAT_BASE_URL: z.string().optional(),
   OPENAI_COMPAT_API_KEY: z.string().optional(),
   OPENAI_COMPAT_MODEL: z.string().optional(),
-  JWT_SECRET: z.string().min(32).optional(),
+  FIREBASE_PROJECT_ID: z.string().optional(), // public; empty = sign-in disabled
   TURNSTILE_SECRET: z.string().optional(),
   TRUST_PROXY: z.coerce.number().default(1),
   CROSS_SITE_COOKIES: z.enum(['true', 'false']).default('false'),

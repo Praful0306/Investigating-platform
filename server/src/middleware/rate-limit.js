@@ -9,6 +9,7 @@ export const DEFAULT_LIMITS = Object.freeze({
   global: { windowMs: MINUTE, limit: 120 }, // per IP, every /api route
   create: { windowMs: 10 * MINUTE, limit: 5 }, // per player: each new case costs one AI call
   daily: { windowMs: DAY, limit: 20 }, // per IP: stops "clear the cookie, ask again"
+  auth: { windowMs: 15 * MINUTE, limit: 60 }, // per IP: the client calls /auth/session once per sign-in
 });
 
 // Logged-in users are counted by account, guests by their cookie.
@@ -31,5 +32,6 @@ export function createLimiters(overrides = {}) {
     global: limiter(cfg.global, 'Too many requests. Please slow down and try again shortly.'),
     create: limiter(cfg.create, 'Too many new cases. Please wait a few minutes before generating another.', playerKey),
     daily: limiter(cfg.daily, 'The daily limit for new cases was reached. Please try again tomorrow.'),
+    auth: limiter(cfg.auth, 'Too many sign-in attempts. Please wait a few minutes and try again.'),
   };
 }

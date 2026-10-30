@@ -417,8 +417,11 @@ describe('request log hygiene', () => {
   it('never logs the premise, the body, cookies or auth headers', async () => {
     const logger = fresh();
     const a = makeApp({ logger });
+    // a token is refused here (503: this app has no Firebase project) but must still never reach the log
     await request(a).post('/api/cases').set('Cookie', 'mr_pid=3b241101-e2bb-4255-8caf-4136c566a962; mr_token=JWT_SECRET_VALUE')
-      .set('Authorization', 'Bearer BEARER_SECRET').send({ premise: `${PREMISE} PREMISE_MARKER`, difficulty: 'easy' }).expect(201);
+      .set('Authorization', 'Bearer BEARER_SECRET').send({ premise: `${PREMISE} PREMISE_MARKER`, difficulty: 'easy' }).expect(503);
+    await request(a).post('/api/cases').set('Cookie', 'mr_pid=3b241101-e2bb-4255-8caf-4136c566a962; mr_token=JWT_SECRET_VALUE')
+      .send({ premise: `${PREMISE} PREMISE_MARKER`, difficulty: 'easy' }).expect(201);
     await settle();
     const all = JSON.stringify([logger.info.mock.calls, logger.error.mock.calls, logger.warn.mock.calls]);
     for (const bit of ['PREMISE_MARKER', PREMISE, '3b241101', 'JWT_SECRET_VALUE', 'BEARER_SECRET', 'MOCK_SECRET_EXPLANATION']) expect(all, bit).not.toContain(bit);
