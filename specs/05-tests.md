@@ -35,7 +35,7 @@ First run of mongodb-memory-server downloads a MongoDB binary (~100 MB) — do i
 | `api/cases.test.js` | full lifecycle, idempotent discover, hint limits, one accusation, wrong accusation, 404/400/409s, concurrency, no save on AI failure | AC1, AC2, AC4, AC5 |
 | `api/security.test.js` | leak scan, injection bodies, 403 ownership, 415, no stack | AC3, AC8 |
 | `api/rate-limit.test.js` | create limiter returns 429 envelope with low test limits | — |
-| `api/auth.test.js` (Tier 2) | register/login/logout/me, claim guest cases, no passwordHash | — |
+| `api/auth.test.js` (Tier 2) | ID-token verification (valid, expired, wrong issuer/audience/alg, forged), session + claim, history, ownership | — |
 
 ## 4. Client tests
 `client/src/test/setup.js`: `import '@testing-library/jest-dom/vitest'`; mock `matchMedia` (reduced motion true → animations skipped in tests).

@@ -91,7 +91,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Verify:** `npm test` (all green) + secret grep commands in `03-security.md` §5.
 
 ## T-12 · Auth + history (Tier 2)
-- [ ] `src/models/User.js` (if not done), `src/services/auth.service.js`, `src/routes/auth.js`, `src/middleware/auth.js`, `GET /api/cases`, claim on login, `tests/api/auth.test.js`.
+- [ ] `src/services/firebase-token.js`, `src/routes/auth.js` (`POST /session`), `src/middleware/auth.js`, `GET /api/cases` for logged-in users, claim on sign-in, `tests/api/auth.test.js`; remove the unused `User` model, `bcryptjs`, `jsonwebtoken` (SPEC v1.1.0: Firebase Authentication).
 - **Verify:** `npx vitest run tests/api/auth.test.js && npm test`.
 
 ## T-13 · Client scaffold
@@ -111,8 +111,8 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Verify:** mock mode full flow correct + incorrect; `npm test`.
 
 ## T-17 · Auth UI + History (Tier 2)
-- [ ] `context/AuthContext.jsx`, `pages/{Login,Register,History}.jsx`, NavBar states. Spec: §4.6.
-- **Verify:** against real server: register → play → History lists case → logout → login → still listed.
+- [ ] `auth/` (Firebase + mock backend), `context/AuthContext.jsx`, `pages/{Login,Register,History}.jsx`, NavBar states, Results "My cases". Spec: §4.6.
+- **Verify:** mock mode: create account → play → History lists case → sign out → sign in → still listed; with a real Firebase project: same flow, plus Google.
 
 ## T-18 · Motion & polish
 - [ ] GSAP animations from `04-frontend.md` §5, 21st.dev components restyled, optional lazy 3D hero, reduced-motion support, Lighthouse pass.

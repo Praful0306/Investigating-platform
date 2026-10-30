@@ -16,7 +16,7 @@ Source of truth: SPEC §9. Goal: a grader opening DevTools can't find the culpri
 | S9 | XSS from AI text | React escapes by default; server strips tags; **no `dangerouslySetInnerHTML`** | grep check |
 | S10 | Secret leakage (keys in repo or bundle) | `.env` ignored, only `VITE_*` in client, CI grep | `git grep` + bundle grep commands below |
 | S11 | Stack traces / provider errors leaked | central error middleware, generic 500 | API test on forced error |
-| S12 | Weak auth (Tier 2) | bcrypt, httpOnly JWT cookie, generic login error, auth rate limit | `auth.test.js` |
+| S12 | Weak auth / forged identity (Tier 2) | Firebase Authentication; server verifies the ID token (RS256 pinned, issuer, audience, expiry); no passwords stored; invalid token = 401, never a guest; claim only unowned cases of this browser; auth rate limit | `auth.test.js` |
 | S13 | CSRF on cookie-auth POSTs | `SameSite=Lax` cookies + same-origin via Vercel rewrite + CORS allow-list; POSTs need `content-type: application/json` (reject others with 415) | API test: form-encoded POST → 415 |
 
 ## 2. Implementation checklist (T-11)
@@ -27,14 +27,14 @@ Source of truth: SPEC §9. Goal: a grader opening DevTools can't find the culpri
   - global: 120 / min / IP on `/api`
   - create: 5 / 10 min keyed by `req.user?.id ?? req.playerId`
   - daily create: 20 / 24 h keyed by IP (stops cookie-clearing bypass)
-  - auth: 10 / 15 min / IP
+  - auth: 60 / 15 min / IP on `/api/auth` (the client calls it once per sign-in, so it is looser than a password-login limit; Firebase rate-limits the actual sign-ins)
   - limits read from config so tests can set them low.
 - [ ] `trust proxy` set from `TRUST_PROXY` so the limiter sees the real IP (Render = 1; Vercel rewrite → Render = 2). Wrong value = everyone shares one IP bucket, so check `req.ip` in logs after deploy.
 - [ ] Turnstile (optional): if `TURNSTILE_SECRET` set, `POST /api/cases` requires `turnstileToken`; verify via `POST https://challenges.cloudflare.com/turnstile/v0/siteverify` (form fields `secret`, `response`, `remoteip`), fail → 403 `CAPTCHA_FAILED`. Skipped in test.
 - [ ] Cookies: `httpOnly`, `sameSite:'lax'`, `secure: isProd`, `path:'/'`.
 - [ ] Error middleware hides details in prod.
 - [ ] Logs never print API keys, JWTs, cookies, passwords or the solution. Premise truncated to 50 chars.
-- [ ] `JWT_SECRET` ≥ 32 random chars (`node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`).
+- [ ] `FIREBASE_PROJECT_ID` set in production (it is public, not a secret). There is no JWT secret any more.
 
 ## 3. Leak test (must exist, must pass) — `tests/api/security.test.js`
 ```js

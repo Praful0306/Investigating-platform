@@ -115,8 +115,8 @@ Friendly messages by `code` (`src/lib/errors.js`): `RATE_LIMITED` → "You've op
 - Buttons: **New mystery** → `/create`; **My cases** (Tier 2); **Share** (Tier 3: Web Share API / copy text "I solved 'The Silent Sitar' on AI Mystery Room — 105 pts").
 
 ### 4.6 Tier 2 pages (T-17)
-- `AuthContext`: `{ user, loading, login, register, logout, refresh }`, calls `GET /auth/me` on load.
-- Login/Register forms with client validation mirroring server; errors inline; on success navigate back (`?next=`).
+- `AuthContext`: `{ user, status, signIn, signUp, signInWithGoogle, signOut, resetPassword }` over the Firebase Web SDK (loaded lazily, after first paint). After every sign-in it calls `POST /api/auth/session` once to claim guest cases. Every API call carries the current ID token in `Authorization`.
+- Sign in / Create account forms with inline errors, show-password toggle, "Continue with Google", "Forgot password"; on success navigate back (`?next=`, same-site paths only). Firebase error codes are mapped to plain sentences; the raw code never reaches the screen.
 - History: table/cards of `listCases()`; status chips (Active / Solved / Unsolved); links to room or result; empty state "No cases yet — start one".
 - NavBar shows display name + Logout when logged in. Guests can still play everything.
 

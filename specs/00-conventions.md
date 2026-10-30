@@ -50,12 +50,12 @@ mkdir ai-mystery-room && cd ai-mystery-room && git init
 npm create vite@latest client -- --template react
 cd client
 npm install
-npm install react-router-dom axios gsap @gsap/react
+npm install react-router-dom axios gsap @gsap/react firebase
 npm install -D tailwindcss @tailwindcss/vite vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom @playwright/test
 cd ..
 # server
 mkdir server && cd server && npm init -y
-npm install express cors dotenv mongoose @google/genai zod helmet cookie-parser express-rate-limit bcryptjs jsonwebtoken
+npm install express cors dotenv mongoose @google/genai zod helmet cookie-parser express-rate-limit jose
 npm install -D nodemon vitest supertest mongodb-memory-server
 cd ..
 ```

@@ -26,7 +26,7 @@ Google AI Studio (Gemini key) · MongoDB Atlas · GitHub · Vercel (sign in with
    GEMINI_MODEL=gemini-2.5-flash         # or the current Flash model in AI Studio
    AI_PROVIDERS=gemini                   # add ,openai_compat once fallback keys are set
    CLIENT_URL=https://<your-app>.vercel.app
-   JWT_SECRET=<48 random bytes base64url>
+   FIREBASE_PROJECT_ID=<your Firebase project id>   # public; add the Vercel domain to Firebase Auth > Authorized domains
    TRUST_PROXY=2
    ```
    (Render sets `PORT` itself; `env.js` reads it.)

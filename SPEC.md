@@ -121,7 +121,7 @@ Theme: **noir detective office** — near-black background, warm amber accent, p
 - Buttons: **New mystery**, **My cases** (if logged in), optional **Share**.
 
 ### 4.6 Optional pages (Tier 2)
-- `/login`, `/register`: email + password forms, inline errors.
+- `/login`, `/register`: Firebase Authentication — email + password and "Continue with Google" — with inline errors. Sign-out is client-side (Firebase `signOut`).
 - `/history`: list of my cases (title, difficulty, status, score, date) linking to room/result.
 
 ### 4.7 Global UI rules
@@ -140,7 +140,7 @@ Base path `/api`. JSON only. Request body limit 10 kb. All IDs in paths are vali
 
 ### 5.1 Identity
 - **Guest:** on any request without a valid `mr_pid` cookie, the server sets `mr_pid` = random UUID v4 (httpOnly, `SameSite=Lax`, `Secure` in prod, 180-day max-age). Cases store `playerId`.
-- **Logged in (Tier 2):** `mr_token` httpOnly cookie with a JWT (`sub` = userId, 7-day expiry). Cases store `userId` too.
+- **Logged in (Tier 2, Firebase Authentication):** the client signs in with the Firebase Web SDK and sends the user's **Firebase ID token** as `Authorization: Bearer <token>`. The server verifies it (RS256, Google's public keys, `iss` = `https://securetoken.google.com/<FIREBASE_PROJECT_ID>`, `aud` = the project id, `exp`, non-empty `sub`) and uses `sub` (the Firebase `uid`) as the user id. There is no password, no session cookie and no `User` collection on our side. Cases store `userId` (the uid) too. A token that is present but invalid or expired is `401 UNAUTHORIZED` (never silently treated as a guest); no token means guest.
 - **Access rule:** a case can be read or played only by the requester whose `playerId` matches, or whose `userId` matches. Otherwise `403 FORBIDDEN`.
 - Production uses a Vercel rewrite so the browser calls same-origin `/api/*`; cookies are first-party.
 
@@ -153,18 +153,18 @@ Base path `/api`. JSON only. Request body limit 10 kb. All IDs in paths are vali
 |---|---|---|
 | 400 | `VALIDATION_ERROR` | Body/params fail zod schema |
 | 400 | `INVALID_ID` | `:id` not a valid ObjectId |
-| 401 | `UNAUTHORIZED` | Auth route needs login |
+| 401 | `UNAUTHORIZED` | Auth route needs login, or the ID token is invalid/expired |
 | 403 | `FORBIDDEN` | Case belongs to another player |
 | 403 | `CAPTCHA_FAILED` | Turnstile enabled and token invalid |
 | 404 | `CASE_NOT_FOUND` / `CLUE_NOT_FOUND` / `SUSPECT_NOT_FOUND` / `ROUTE_NOT_FOUND` | |
 | 409 | `CASE_ALREADY_COMPLETED` | discover/hint/accuse on a completed case |
 | 409 | `NO_HINTS_LEFT` | all hints used |
 | 409 | `CASE_NOT_COMPLETED` | result requested before accusation |
-| 409 | `EMAIL_TAKEN` | register with existing email |
 | 415 | `UNSUPPORTED_MEDIA_TYPE` | request has a body whose content type is not `application/json` |
 | 429 | `RATE_LIMITED` | too many requests |
 | 502 | `AI_GENERATION_FAILED` | all attempts produced invalid output |
 | 503 | `AI_UNAVAILABLE` | provider quota/network failure on all providers |
+| 503 | `AUTH_UNAVAILABLE` | an ID token was sent but the server has no `FIREBASE_PROJECT_ID` configured |
 | 500 | `INTERNAL_ERROR` | anything else (message generic) |
 
 ### 5.3 Public case object (`PublicCase`)
@@ -248,11 +248,7 @@ Request `{ "suspectId": "s3" }` (`^s\d$`). One accusation per case, enforced ato
 
 #### Tier 2 endpoints
 - `GET /api/cases` → `{ "cases": [ { id, title, difficulty, status, score|null, createdAt } ] }` — newest first, max 50, for current player/user. No secrets.
-- `POST /api/auth/register` `{ email, password, displayName }` → 201 `{ user }` + sets cookie. Password 8–72 chars; email normalized lowercase.
-- `POST /api/auth/login` `{ email, password }` → 200 `{ user }` + cookie. Generic error "Invalid email or password" (401).
-- `POST /api/auth/logout` → 204, clears cookie.
-- `GET /api/auth/me` → 200 `{ user }` or 401.
-- On register/login, guest cases with the current `playerId` get `userId` attached ("claim").
+- `POST /api/auth/session` (requires `Authorization: Bearer <Firebase ID token>`, empty body) → 200 `{ user: { id, email, displayName }, claimed: <number> }`. The user fields come from the verified token. Called by the client once after every sign-in: guest cases with the current `playerId` and no `userId` get `userId` attached ("claim"); cases that already belong to someone are never touched. 401 `UNAUTHORIZED` when the token is missing or invalid, 503 `AUTH_UNAVAILABLE` when auth is not configured. Registration, login, password reset and logout happen in Firebase, not in our API.
 - Tier 3: `GET /api/leaderboard?difficulty=easy` → top 20 completed scores (displayName, score, title, date).
 
 ---
@@ -277,7 +273,7 @@ Request `{ "suspectId": "s3" }` (`^s\d$`). One accusation per case, enforced ato
 | `accusation` | Object | `{ suspectId, correct, submittedAt }`, default null |
 | `score` | Object | `{ base, clueBonus, hintPenalty, total }`, default null |
 | `playerId` | String | required, indexed |
-| `userId` | ObjectId → User | optional, indexed |
+| `userId` | String (Firebase uid) | optional, indexed |
 | `ai` | Object | `{ provider, model, attempts, latencyMs }` (debug, never sent to client) |
 | `createdAt`, `updatedAt`, `completedAt` | Date | timestamps |
 
@@ -285,7 +281,7 @@ Indexes: `{ playerId: 1, createdAt: -1 }`, `{ userId: 1, createdAt: -1 }`, `{ st
 Mongoose: `strict: true`, `strictQuery: true`. Operator injection is blocked by zod (every client value in a filter is a regex-checked string); global `sanitizeFilter` is **not** used because it breaks our own `$lt`/`$size` guards.
 
 ### 6.2 `User` (Tier 2)
-`email` (unique, lowercase), `passwordHash` (`select: false`), `displayName` (2–30), timestamps.
+None. Accounts live in Firebase Authentication; our database stores only the Firebase `uid` on each case (`Case.userId`). No emails, names or password data are stored by us.
 
 ---
 
@@ -369,7 +365,7 @@ total       = max(0, base + clueBonus − hintPenalty)
 5. Secrets only in server env; client env holds only `VITE_*` public values. `.env` git-ignored; `.env.example` committed.
 6. `helmet`, CORS allow-list (`CLIENT_URL`), JSON limit 10 kb, rate limits, zod on all inputs (strings only reach DB filters).
 7. Atomic state transitions (`findOneAndUpdate` with `status: 'active'` conditions) to stop double hints / double accusations.
-8. Passwords with bcrypt (cost 10), JWT secret ≥ 32 chars, httpOnly cookies.
+8. Authentication is Firebase's: we store no passwords. ID tokens are verified server-side with Google's public keys (algorithm pinned to RS256, issuer, audience, expiry checked); tokens are never logged; a bad token is a 401, never a guest. Claiming a guest case needs both the verified token and that browser's own `mr_pid`, and only claims cases nobody owns.
 9. Errors never leak stack traces or provider messages in production.
 10. Prompt injection: premise treated as theme text only, length-limited, output validated.
 
@@ -399,7 +395,7 @@ AI_PROVIDERS=gemini                       # e.g. gemini,openai_compat  | tests: 
 OPENAI_COMPAT_BASE_URL=                   # optional fallback, e.g. https://api.groq.com/openai/v1
 OPENAI_COMPAT_API_KEY=
 OPENAI_COMPAT_MODEL=
-JWT_SECRET=change-me-to-32+-random-chars  # Tier 2
+FIREBASE_PROJECT_ID=                      # Tier 2: your Firebase project id (public); empty = sign-in disabled
 TURNSTILE_SECRET=                         # optional; empty = disabled
 TRUST_PROXY=1                             # hops in front of Express (Render=1; Vercel rewrite + Render=2)
 CROSS_SITE_COOKIES=false                  # true only if the client calls the API cross-origin (no Vercel rewrite)
@@ -409,6 +405,10 @@ CROSS_SITE_COOKIES=false                  # true only if the client calls the AP
 VITE_API_BASE_URL=/api                    # same-origin via Vite proxy (dev) and Vercel rewrite (prod)
 VITE_USE_MOCK=false                       # true = frontend runs on fixtures without backend
 VITE_TURNSTILE_SITE_KEY=
+VITE_FIREBASE_API_KEY=                    # Tier 2: Firebase web config (public values, safe in the bundle)
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_APP_ID=
 ```
 
 ---
@@ -439,3 +439,4 @@ ai-mystery-room/
 ## 14. Change log
 - v1.0 — initial frozen spec.
 - v1.0.1 — §5.2: added `415 UNSUPPORTED_MEDIA_TYPE` (required by `specs/03-security.md` S13; was missing from the error table). A malformed or over-10 kb JSON body is reported as `400 VALIDATION_ERROR`.
+- v1.1.0 — Tier 2 authentication is Firebase Authentication (email + password and Google) instead of our own email/password + JWT cookie. Changed §4.6, §5.1, §5.2 (`AUTH_UNAVAILABLE` added, `EMAIL_TAKEN` removed), §5.4 (`/api/auth/*` replaced by `POST /api/auth/session`), §6.1 (`userId` is the Firebase uid), §6.2 (no `User` collection), §9.8, §11 (`FIREBASE_PROJECT_ID`, `VITE_FIREBASE_*`; `JWT_SECRET` removed). Reason: owner asked for a polished sign-in with Google and chose Firebase.

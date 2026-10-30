@@ -23,7 +23,7 @@ const Env = z.object({
   OPENAI_COMPAT_BASE_URL: z.string().optional(),
   OPENAI_COMPAT_API_KEY: z.string().optional(),
   OPENAI_COMPAT_MODEL: z.string().optional(),
-  JWT_SECRET: z.string().min(32).optional(),
+  FIREBASE_PROJECT_ID: z.string().optional(),
   TURNSTILE_SECRET: z.string().optional(),
   TRUST_PROXY: z.coerce.number().default(1),
 });
@@ -41,7 +41,7 @@ Order matters:
 5. `cookieParser()`
 6. request logger (method, path, status, ms) — skip in test
 7. `globalLimiter` (per IP, 120 req/min) on `/api`
-8. `player` middleware (sets/reads `mr_pid`), `optionalAuth` (reads `mr_token` if present)
+8. `player` middleware (sets/reads `mr_pid`), `optionalAuth` (reads `Authorization: Bearer` if present)
 9. routes: `/api/health`, `/api/cases`, `/api/auth`
 10. 404 → `AppError('ROUTE_NOT_FOUND', 404, 'Route not found')`
 11. error middleware (last)
@@ -439,16 +439,15 @@ cd server && npx vitest run tests/api/cases.test.js
 ---
 
 ## 6. Auth & history (T-12, Tier 2)
-- `auth.service.js`: `register` (bcrypt hash cost 10, unique email → 409 `EMAIL_TAKEN`), `login` (constant message on failure), `signToken(user)` → JWT `{ sub }`, 7 d.
-- Cookie `mr_token`: httpOnly, `sameSite:'lax'`, `secure` in prod, 7 d.
-- `optionalAuth` middleware: verify token if present, set `req.user = { id, displayName }`; invalid token → clear cookie, continue as guest.
+- `services/firebase-token.js`: `createTokenVerifier({ projectId, jwks })` verifies a Firebase ID token with `jose` (RS256 only, issuer `https://securetoken.google.com/<projectId>`, audience `<projectId>`, expiry, non-empty `sub`, `auth_time` not in the future) against Google's keys (`https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com`, cached by `jose`). Returns `{ id: sub, email, displayName }`.
+- `optionalAuth` middleware: no `Authorization` header → guest; header present → verify, set `req.user`; invalid/expired → 401 `UNAUTHORIZED`; no `FIREBASE_PROJECT_ID` configured → 503 `AUTH_UNAVAILABLE`.
 - `requireAuth` → 401 `UNAUTHORIZED`.
-- After register/login: `Case.updateMany({ playerId: req.playerId, userId: null }, { $set: { userId } })`.
+- `POST /api/auth/session` (requireAuth): `Case.updateMany({ playerId: req.playerId, userId: null }, { $set: { userId: req.user.id } })`, then `{ user, claimed }`.
 - `GET /api/cases`: filter `req.user ? { userId } : { playerId }`, sort `-createdAt`, limit 50, `toCaseSummary`.
-- Auth limiter: 10 attempts / 15 min per IP on `/login` and `/register`.
+- Auth limiter: 60 / 15 min per IP on `/api/auth`.
 
 ### Verify T-12
-`tests/api/auth.test.js`: register → 201 + cookie, duplicate → 409, login wrong → 401 generic, me → 200, logout → me 401; guest creates case then registers → `GET /api/cases` lists it; response never includes `passwordHash`.
+`tests/api/auth.test.js` (a local key pair stands in for Google's keys): valid token → session 200; expired / wrong issuer / wrong audience / `alg:none` / HS256 / forged signature → 401; guest creates a case then signs in → `GET /api/cases` lists it; a second user cannot read it; another browser's cases are never claimed.
 
 ---
 

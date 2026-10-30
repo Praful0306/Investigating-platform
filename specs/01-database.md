@@ -93,15 +93,8 @@ CaseSchema.set('toJSON', { transform: (_doc, ret) => { delete ret.solution; dele
 export const Case = mongoose.model('Case', CaseSchema);
 ```
 
-## 4. User model (Tier 2) — `server/src/models/User.js`
-```js
-const UserSchema = new Schema({
-  email: { type: String, required: true, unique: true, lowercase: true, trim: true, maxlength: 254 },
-  passwordHash: { type: String, required: true, select: false },
-  displayName: { type: String, required: true, minlength: 2, maxlength: 30, trim: true },
-}, { timestamps: true });
-UserSchema.set('toJSON', { transform: (_d, r) => { delete r.passwordHash; return r; } });
-```
+## 4. User model (Tier 2) — none
+Accounts are Firebase Authentication users (SPEC v1.1.0). We keep no `User` collection: `Case.userId` is a plain String holding the Firebase `uid`.
 
 ## 5. Atomic state transitions (repository functions in `case.service.js`)
 All game mutations are single `findOneAndUpdate` calls with guard conditions. Never read-modify-save.
