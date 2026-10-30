@@ -24,7 +24,7 @@ export function Hero() {
       autoSplit: true,
       onSplit: (self) => gsap.from(self.chars, { yPercent: 115, duration: 1, ease: 'expo.out', stagger: 0.02 }),
     });
-    gsap.from(root.current.querySelectorAll('[data-hero-fade]'), { opacity: 0, y: 18, duration: 0.8, ease: 'power3.out', stagger: 0.12, delay: 0.55 });
+    gsap.from(root.current.querySelectorAll('[data-hero-fade]'), { opacity: 0, y: 18, duration: 0.8, ease: 'power3.out', stagger: 0.09, delay: 0.15 });
   }, { scope: root, dependencies: [reduced], revertOnUpdate: true });
 
   return (

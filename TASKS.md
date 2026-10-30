@@ -115,7 +115,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Verify:** mock mode: create account → play → History lists case → sign out → sign in → still listed; with a real Firebase project: same flow, plus Google.
 
 ## T-18 · Motion & polish
-- [ ] GSAP animations from `04-frontend.md` §5, 21st.dev components restyled, optional lazy 3D hero, reduced-motion support, Lighthouse pass.
+- [x] GSAP animations from `04-frontend.md` §5, 21st.dev components restyled, optional lazy 3D hero, reduced-motion support, Lighthouse pass.
 - **Verify:** `npm run build` (check gzip sizes in output, initial JS < 300 kB), Lighthouse mobile on Home: Perf ≥ 70, A11y ≥ 90; OS "reduce motion" on → no animations.
 
 ## T-19 · Integration + E2E

@@ -13,6 +13,9 @@
     "build:mock": "vite build --mode mock"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/playfair-display": "^5.3.0",
     "@gsap/react": "^2.1.2",
     "axios": "^1.21.0",
     "firebase": "^13.1.0",
