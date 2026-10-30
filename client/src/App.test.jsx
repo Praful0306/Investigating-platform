@@ -5,9 +5,13 @@ import { AppRoutes, Providers } from './App.jsx';
 
 // pages that call the API (Home pings /health) must not make real network requests in tests
 vi.mock('./api/cases.js', async () => {
-  const { PUBLIC_CASE_EXAMPLE } = await import('./api/mock/fixtures.js');
-  return { health: vi.fn().mockResolvedValue({ ok: true }), createCase: vi.fn(), getCase: vi.fn().mockResolvedValue(PUBLIC_CASE_EXAMPLE) };
+  const { PUBLIC_CASE_EXAMPLE, RESULT_EXAMPLE } = await import('./api/mock/fixtures.js');
+  return {
+    health: vi.fn().mockResolvedValue({ ok: true }), createCase: vi.fn(),
+    getCase: vi.fn().mockResolvedValue(PUBLIC_CASE_EXAMPLE), getResult: vi.fn().mockResolvedValue(RESULT_EXAMPLE), accuse: vi.fn(),
+  };
 });
+const api = await import('./api/cases.js');
 
 const at = (path) =>
   render(
@@ -30,7 +34,7 @@ describe('routes', () => {
     ['/create', 'Create a mystery', 'Create a mystery · AI Mystery Room'],
     ['/case/6720c1f0a1b2c3d4e5f60718', 'The Silent Sitar', 'The Silent Sitar · AI Mystery Room'],
     ['/case/6720c1f0a1b2c3d4e5f60718/accuse', 'Make your accusation', 'Make your accusation · AI Mystery Room'],
-    ['/case/6720c1f0a1b2c3d4e5f60718/result', 'Case result', 'Case result · AI Mystery Room'],
+    ['/case/6720c1f0a1b2c3d4e5f60718/result', 'Case closed — you got it!', 'Case result · AI Mystery Room'],
     ['/login', 'Sign in', 'Sign in · AI Mystery Room'],
     ['/register', 'Create your account', 'Create your account · AI Mystery Room'],
     ['/history', 'My cases', 'My cases · AI Mystery Room'],
@@ -51,7 +55,8 @@ describe('routes', () => {
 
   it('case pages receive their :id', async () => {
     at('/case/abc123/accuse');
-    expect(await screen.findByText(/case id: abc123/i)).toBeInTheDocument();
+    await screen.findByRole('heading', { level: 1, name: 'Make your accusation' });
+    expect(api.getCase).toHaveBeenCalledWith('abc123');
   });
 
   it.each(['/nope', '/case', '/case/abc/unknown', '/create/extra'])('%s -> a friendly 404 with a way home', async (path) => {

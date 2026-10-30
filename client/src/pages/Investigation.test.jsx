@@ -3,6 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
 import { Providers } from '../App.jsx';
+import { setReducedMotion } from '../test/matchMedia.js';
 import Investigation from './Investigation.jsx';
 
 // The page talks to the real mock game engine (proven identical to the server in api/mock/mock.test.js), wrapped in
@@ -243,6 +244,12 @@ describe('redirects and errors', () => {
     const created = await open('easy', (c) => mock.accuse(c.id, suspect));
     expect(await screen.findByText(`RESULT ${created.id}`)).toBeInTheDocument();
     expect(screen.queryByRole('heading', { level: 1, name: 'The Silent Sitar' })).toBeNull();
+  });
+
+  it('with motion on, a closed case still redirects cleanly (nothing to animate while redirecting)', async () => {
+    setReducedMotion(false);
+    const created = await open('easy', (c) => mock.accuse(c.id, 's1'));
+    expect(await screen.findByText(`RESULT ${created.id}`)).toBeInTheDocument();
   });
 
   it.each([

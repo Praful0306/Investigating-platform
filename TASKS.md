@@ -107,7 +107,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Verify:** mock mode: examine clues, take hints until disabled, progress updates; `npm test -- Investigation`; check 360 px width.
 
 ## T-16 · Accusation + Results
-- [ ] `pages/Accusation.jsx`, `pages/Results.jsx`, components for verdict/score, tests. Spec: §4.4–4.5.
+- [x] `pages/Accusation.jsx`, `pages/Results.jsx`, components for verdict/score, tests. Spec: §4.4–4.5.
 - **Verify:** mock mode full flow correct + incorrect; `npm test`.
 
 ## T-17 · Auth UI + History (Tier 2)

@@ -1,23 +1,20 @@
 import { useRef } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 import { discoverClue, requestHint } from '../api/cases.js';
 import { AccuseBar } from '../components/case/AccuseBar.jsx';
+import { CaseError } from '../components/case/CaseError.jsx';
 import { CaseHeader } from '../components/case/CaseHeader.jsx';
 import { ClueCard } from '../components/case/ClueCard.jsx';
 import { HintsPanel } from '../components/case/HintsPanel.jsx';
 import { InvestigationSkeleton } from '../components/case/InvestigationSkeleton.jsx';
 import { StoryPanel } from '../components/case/StoryPanel.jsx';
 import { SuspectCard } from '../components/case/SuspectCard.jsx';
-import { Button } from '../components/ui/Button.jsx';
-import { ErrorState } from '../components/ui/ErrorState.jsx';
 import { useToast } from '../components/ui/useToast.js';
 import { useCase } from '../hooks/useCase.js';
 import { useDocumentTitle } from '../hooks/useDocumentTitle.js';
 import { useReducedMotion } from '../hooks/useReducedMotion.js';
 import { friendlyMessage } from '../lib/errors.js';
 import { gsap, useGSAP } from '../lib/gsap.js';
-
-const GONE = new Set(['CASE_NOT_FOUND', 'INVALID_ID']);
 
 export default function Investigation() {
   const { id } = useParams();
@@ -29,7 +26,7 @@ export default function Investigation() {
 
   // the page rises in once, when the case first arrives (not on every clue or hint)
   useGSAP(() => {
-    if (reduced || !data) return;
+    if (reduced || !data || !root.current) return; // no page on screen while redirecting or failing
     gsap.from(root.current.querySelectorAll('[data-reveal]'), { opacity: 0, y: 24, duration: 0.7, ease: 'power3.out', stagger: 0.07, clearProps: 'opacity,transform' });
   }, { scope: root, dependencies: [reduced, Boolean(data)] });
 
@@ -62,21 +59,7 @@ export default function Investigation() {
 
   if (loading && !data) return <InvestigationSkeleton />;
 
-  if (error && !data) {
-    const forbidden = error.code === 'FORBIDDEN';
-    const title = forbidden ? 'Not your case file' : GONE.has(error.code) ? 'Case not found' : 'Could not open the case';
-    return (
-      <div className="mx-auto max-w-6xl px-4 py-24">
-        <h1 className="sr-only">Investigation room</h1>
-        <ErrorState
-          title={title}
-          error={error}
-          onRetry={refresh}
-          actions={<Button as={Link} to="/create">Start a new mystery</Button>}
-        />
-      </div>
-    );
-  }
+  if (error && !data) return <CaseError error={error} heading="Investigation room" onRetry={refresh} />;
 
   if (!data) return <InvestigationSkeleton />;
   if (data.status !== 'active') return <Navigate to={`/case/${id}/result`} replace />;
