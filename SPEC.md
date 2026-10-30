@@ -161,6 +161,7 @@ Base path `/api`. JSON only. Request body limit 10 kb. All IDs in paths are vali
 | 409 | `NO_HINTS_LEFT` | all hints used |
 | 409 | `CASE_NOT_COMPLETED` | result requested before accusation |
 | 409 | `EMAIL_TAKEN` | register with existing email |
+| 415 | `UNSUPPORTED_MEDIA_TYPE` | request has a body whose content type is not `application/json` |
 | 429 | `RATE_LIMITED` | too many requests |
 | 502 | `AI_GENERATION_FAILED` | all attempts produced invalid output |
 | 503 | `AI_UNAVAILABLE` | provider quota/network failure on all providers |
@@ -437,3 +438,4 @@ ai-mystery-room/
 
 ## 14. Change log
 - v1.0 — initial frozen spec.
+- v1.0.1 — §5.2: added `415 UNSUPPORTED_MEDIA_TYPE` (required by `specs/03-security.md` S13; was missing from the error table). A malformed or over-10 kb JSON body is reported as `400 VALIDATION_ERROR`.
