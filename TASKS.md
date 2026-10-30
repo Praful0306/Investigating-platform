@@ -59,7 +59,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Verify:** `npx vitest run tests/unit/scoring.test.js` — all six table cases pass.
 
 ## T-06 · Serializers
-- [ ] `src/serializers/case.serializer.js`, `tests/unit/serializer.test.js`. Spec: `02-backend.md` §3.
+- [x] `src/serializers/case.serializer.js`, `tests/unit/serializer.test.js`. Spec: `02-backend.md` §3.
 - **Verify:** `npx vitest run tests/unit/serializer.test.js`.
 - **Done when:** leak assertions pass; `toResult` throws for active cases.
 
