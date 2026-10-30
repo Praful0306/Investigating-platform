@@ -12,9 +12,15 @@ const CreateCaseBody = z.strictObject({
   turnstileToken: z.string().max(2048).optional(),
 });
 const IdParam = z.object({ id: z.string().regex(/^[a-f\d]{24}$/i, 'Invalid case id') });
+const ClueParam = IdParam.extend({ clueId: z.string().regex(/^c\d{1,2}$/, 'Invalid clue id') });
+const AccuseBody = z.strictObject({ suspectId: z.string().regex(/^s\d$/, 'Invalid suspect id') });
 
 export const casesRouter = Router();
 
 casesRouter.post('/', validate({ body: CreateCaseBody }), ctrl.create);
 casesRouter.get('/', ctrl.list);
 casesRouter.get('/:id', validate({ params: IdParam }), ctrl.get);
+casesRouter.post('/:id/clues/:clueId/discover', validate({ params: ClueParam }), ctrl.discover);
+casesRouter.post('/:id/hints', validate({ params: IdParam }), ctrl.hint);
+casesRouter.post('/:id/accuse', validate({ params: IdParam, body: AccuseBody }), ctrl.accuse);
+casesRouter.get('/:id/result', validate({ params: IdParam }), ctrl.result);

@@ -80,7 +80,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Verify:** `npx vitest run tests/api/cases.test.js -t "create|get"`.
 
 ## T-10 · Gameplay routes
-- [ ] discover, hint, accuse, result in service/controller/routes + remaining `cases.test.js` bullets (incl. concurrency).
+- [x] discover, hint, accuse, result in service/controller/routes + remaining `cases.test.js` bullets (incl. concurrency).
 - Spec: `02-backend.md` §5, `01-database.md` §5.
 - **Verify:** `npx vitest run tests/api/cases.test.js`.
 - **Done when:** every bullet in "Verify T-09 / T-10" passes; manual run with `AI_PROVIDERS=mock npm run dev` + curl through the whole flow works.
