@@ -51,7 +51,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Done when:** listed in §1 "Done when".
 
 ## T-04 · Models
-- [ ] `src/models/Case.js`, `src/models/User.js`, `tests/unit/model.test.js`. Spec: `specs/01-database.md` §3–4, §8.
+- [x] `src/models/Case.js`, `src/models/User.js`, `tests/unit/model.test.js`. Spec: `specs/01-database.md` §3–4, §8.
 - **Verify:** `npx vitest run tests/unit/model.test.js`.
 
 ## T-05 · Difficulty + scoring
