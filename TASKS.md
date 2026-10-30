@@ -45,7 +45,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Verify:** `cd server && node -e "require('dotenv').config(); console.log(!!process.env.GEMINI_API_KEY, !!process.env.MONGODB_URI)"` prints `true true` (run as CommonJS: `node --input-type=commonjs -e ...` if needed).
 
 ## T-03 · Server skeleton
-- [ ] Files: `src/index.js`, `src/app.js`, `src/config/env.js`, `src/db/connect.js`, `src/routes/health.js`, `src/middleware/{player,error}.js`, `src/utils/app-error.js`, `tests/helpers/*`, `tests/api/health.test.js`, `vitest.config.js`.
+- [x] Files: `src/index.js`, `src/app.js`, `src/config/env.js`, `src/db/connect.js`, `src/routes/health.js`, `src/middleware/{player,error}.js`, `src/utils/app-error.js`, `tests/helpers/*`, `tests/api/health.test.js`, `vitest.config.js`.
 - Spec: `specs/02-backend.md` §1.
 - **Verify:** `npm run check && npm test` + curl checks in §1.
 - **Done when:** listed in §1 "Done when".

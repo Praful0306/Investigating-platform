@@ -146,3 +146,5 @@ Cut in order: 3D hero → leaderboard/share → auth + history → Turnstile →
 - `mongodb-memory-server` binary (mongod 8.2.6) downloaded and cached.
 
 **Auth decision pending (Phase 8):** user asked for a very polished auth UI and allowed Firebase. SPEC §5.1/§9 specify email+password JWT. If Firebase is used: Firebase Auth on the client (email/password + Google), server verifies the Firebase ID token and maps `uid` → `userId`; SPEC §5.1, §5.4, §6.2, §9 and 03-security S12 must be updated **before** coding it. Guest play stays unchanged.
+
+**T-03 done (30 Oct).** Notes: `tests/helpers/db.js` exports `useMemoryDb()` (called per test file) instead of a global setup that boots Mongo for every file — keeps unit tests fast. Added `tests/unit/error.test.js` (proves Express 5 forwards async throws, no stack/message leak). Body-parser errors (bad JSON / >10kb) map to 400 `VALIDATION_ERROR`. `CROSS_SITE_COOKIES` added to env (gap G1). Helmet, CORS, logger, limiters, 415 guard are deliberately left for T-11 (marked spot in `app.js`).
