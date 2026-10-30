@@ -119,7 +119,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Verify:** `npm run build` (check gzip sizes in output, initial JS < 300 kB), Lighthouse mobile on Home: Perf ≥ 70, A11y ≥ 90; OS "reduce motion" on → no animations.
 
 ## T-19 · Integration + E2E
-- [ ] Run client against real server with `AI_PROVIDERS=mock` (`VITE_USE_MOCK=false`), fix contract mismatches, `server/scripts/dev-memory.mjs`, `client/playwright.config.js`, `client/e2e/flow.spec.js`, optional CI workflow.
+- [x] Run client against real server with `AI_PROVIDERS=mock` (`VITE_USE_MOCK=false`), fix contract mismatches, `server/scripts/dev-memory.mjs`, `client/playwright.config.js`, `client/e2e/flow.spec.js`, optional CI workflow.
 - **Verify:** `cd server && npm test` · `cd client && npm test && npx playwright test` — all green.
 
 ## T-20 · Deploy backend

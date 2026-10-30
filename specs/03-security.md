@@ -61,9 +61,9 @@ it('never leaks the solution before accusation', async () => {
 Plus: injection bodies (`{"suspectId":{"$ne":null}}`, `{"premise":{"$gt":""},"difficulty":"easy"}`) → 400; extra `score` field on accuse → 400; second agent → 403; forced 500 → body has no `stack`.
 
 ## 4. Frontend security
-- Only `VITE_API_BASE_URL`, `VITE_USE_MOCK`, `VITE_TURNSTILE_SITE_KEY` in client env.
-- No `dangerouslySetInnerHTML`, no `eval`, no storing tokens in `localStorage` (cookies are httpOnly).
-- `vercel.json` headers: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`. Add a CSP only after the UI is final (Turnstile and Google Fonts need allow-listing): `default-src 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'`.
+- Only `VITE_API_BASE_URL`, `VITE_USE_MOCK`, `VITE_TURNSTILE_SITE_KEY` and the four public `VITE_FIREBASE_*` values in client env.
+- No `dangerouslySetInnerHTML`, no `eval`, and our own code stores no tokens in `localStorage`. The Firebase SDK keeps its own session in IndexedDB (its standard behaviour); the ID token is sent only in the `Authorization` header, never in a URL or body. The guest cookie `mr_pid` is httpOnly.
+- `vercel.json` headers: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`. Add a CSP only after the UI is final. Fonts are self-hosted now (no Google Fonts origin). Turnstile and Firebase Authentication need allow-listing: `default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://apis.google.com; frame-src https://challenges.cloudflare.com https://*.firebaseapp.com https://accounts.google.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://*.googleusercontent.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com`. Test sign-in (email and Google popup) with the CSP on before shipping it.
 - Client-side score preview is labelled "preview" and never sent.
 
 ## 5. Verify (T-11)
