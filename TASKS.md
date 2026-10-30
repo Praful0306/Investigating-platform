@@ -99,7 +99,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Verify:** `VITE_USE_MOCK=true npm run dev` → every route renders a placeholder; `npm run lint && npm run build`.
 
 ## T-14 · Home + Create
-- [ ] `pages/Home.jsx`, `pages/CreateMystery.jsx`, `components/case/GeneratingOverlay.jsx`, `hooks/useHealthWake.js`, `CreateMystery.test.jsx`. Spec: `04-frontend.md` §4.1–4.2.
+- [x] `pages/Home.jsx`, `pages/CreateMystery.jsx`, `components/case/GeneratingOverlay.jsx`, `hooks/useHealthWake.js`, `CreateMystery.test.jsx`. Spec: `04-frontend.md` §4.1–4.2.
 - **Verify:** mock mode: generate easy → lands on `/case/:id`. `npm test -- CreateMystery`.
 
 ## T-15 · Investigation

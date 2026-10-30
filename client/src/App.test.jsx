@@ -1,7 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AppRoutes, Providers } from './App.jsx';
+
+// pages that call the API (Home pings /health) must not make real network requests in tests
+vi.mock('./api/cases.js', () => ({ health: vi.fn().mockResolvedValue({ ok: true }), createCase: vi.fn() }));
 
 const at = (path) =>
   render(
@@ -20,7 +23,7 @@ describe('routes', () => {
   });
 
   it.each([
-    ['/', 'AI Mystery Room', 'AI Mystery Room — every case is new'],
+    ['/', /every case is new/i, 'AI Mystery Room — every case is new'],
     ['/create', 'Create a mystery', 'Create a mystery · AI Mystery Room'],
     ['/case/6720c1f0a1b2c3d4e5f60718', 'Investigation room', 'Investigation room · AI Mystery Room'],
     ['/case/6720c1f0a1b2c3d4e5f60718/accuse', 'Make your accusation', 'Make your accusation · AI Mystery Room'],

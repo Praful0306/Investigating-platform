@@ -31,7 +31,9 @@
 
   --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
 
-  --animate-page-enter: page-enter 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* "backwards", not "both": a finished animation must not leave `transform` on the page wrapper. Any transformed ancestor
+     becomes the containing block for position:fixed, which silently breaks ScrollTrigger pinning below it. */
+  --animate-page-enter: page-enter 0.28s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   --animate-toast-in: toast-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-dialog-in: dialog-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-shimmer: shimmer 1.6s linear infinite;
@@ -71,6 +73,9 @@
   }
   p { text-wrap: pretty; }
   ::selection { background: rgb(245 165 36 / 0.35); color: #fff; }
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; } /* "How it works" glides; people who asked for less motion get an instant jump */
+  }
   :focus-visible {
     outline: 2px solid var(--color-amber);
     outline-offset: 2px;
@@ -114,6 +119,13 @@
     border-radius: var(--radius-chip);
     box-shadow: var(--shadow-paper);
     transform: rotate(var(--tilt, 0deg));
+  }
+
+  /* SplitText's line masks clip at the line box, which cuts descenders (the tail of g, y, p) in a tight display headline.
+     Extending the clip box downward, and pulling it back with a negative margin, fixes that without changing layout. */
+  .hero-line-mask {
+    padding-bottom: 0.16em;
+    margin-bottom: -0.16em;
   }
 
   /* skeleton shimmer uses transform only */

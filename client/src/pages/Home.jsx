@@ -1,9 +1,19 @@
-import { PagePlaceholder } from '../components/PagePlaceholder.jsx';
+import { ScrollProgress } from '../components/effects/ScrollProgress.jsx';
+import { ClosingCta } from '../components/home/ClosingCta.jsx';
+import { Difficulties } from '../components/home/Difficulties.jsx';
+import { Hero } from '../components/home/Hero.jsx';
+import { HowItWorks } from '../components/home/HowItWorks.jsx';
+import { useDocumentTitle } from '../hooks/useDocumentTitle.js';
 
 export default function Home() {
+  useDocumentTitle();
   return (
-    <PagePlaceholder title="AI Mystery Room" eyebrow="Case file" documentTitle={null}>
-      <p>Every case is new. Every culprit is hiding. The home page is built in T-14.</p>
-    </PagePlaceholder>
+    <>
+      <ScrollProgress />
+      <Hero />
+      <HowItWorks />
+      <Difficulties />
+      <ClosingCta />
+    </>
   );
 }
