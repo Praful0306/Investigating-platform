@@ -86,7 +86,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Done when:** every bullet in "Verify T-09 / T-10" passes; manual run with `AI_PROVIDERS=mock npm run dev` + curl through the whole flow works.
 
 ## T-11 · Security hardening
-- [ ] helmet, CORS allow-list, 415 guard, rate limiters, Turnstile middleware, log hygiene, `tests/api/security.test.js`, `tests/api/rate-limit.test.js`.
+- [x] helmet, CORS allow-list, 415 guard, rate limiters, Turnstile middleware, log hygiene, `tests/api/security.test.js`, `tests/api/rate-limit.test.js`.
 - Spec: `specs/03-security.md` §2–3.
 - **Verify:** `npm test` (all green) + secret grep commands in `03-security.md` §5.
 
