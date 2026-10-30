@@ -159,3 +159,12 @@ Cut in order: 3D hero → leaderboard/share → auth + history → Turnstile →
 - Zod mirror also enforces the Mongoose max lengths (over-long AI text is retried instead of failing on save); strings are re-validated after HTML stripping; empty-after-strip is an error.
 - `ProviderError(message, status, retryable)` lives in `src/utils/provider-error.js`; mock exposes `calls` and `name` for tests.
 - 9 mutation checks (script kept outside the repo) prove the tests catch each break. Next: T-08 real providers (needs Praful's Gemini key for the live run).
+
+**T-08 code done, live check pending (30 Oct).** 167 server tests green, 8 mutation checks all caught. Findings:
+- `responseJsonSchema` is the right Gemini key (gap G6 resolved from installed SDK typings + docs); `abortSignal` goes inside `config`; `ApiError.status` carries the HTTP code.
+- Gemini's documented JSON-schema subset has **no `maxLength`** → the Gemini provider strips it before sending (validator still enforces lengths). Untested live: if Gemini rejects another keyword, a 400 becomes a non-retryable provider error.
+- Provider errors keep only the HTTP status (never provider text, URLs or keys); 429/5xx are marked retryable, abort/timeout → 504.
+- `buildProvidersFromEnv` skips providers with missing settings (warning names the variables, never values) and **refuses `mock` in production**.
+- `scripts/try-ai.mjs` prints counts/meta, hides the solution unless `--show-solution`.
+- Not wired into `src/index.js` yet — T-09 passes `createAiService(buildProvidersFromEnv(env))` into `createApp`.
+- **Blocked on Praful:** `server/.env` with `GEMINI_API_KEY`, and confirming the current Flash model name (G4).

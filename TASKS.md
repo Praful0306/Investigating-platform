@@ -72,6 +72,8 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - [ ] `providers/gemini.js`, `providers/openai-compat.js`, `buildProvidersFromEnv`, `scripts/try-ai.mjs`.
 - **Verify:** `node scripts/try-ai.mjs easy "A stolen trophy at a college cricket final"` → provider gemini, right counts. Run once per difficulty max. If a fallback key is set: `AI_PROVIDERS=openai_compat node scripts/try-ai.mjs easy "..."`.
 - **Done when:** a real Gemini case passes validation for easy, medium and hard (attempts ≤ 2 typical). Paste `meta` output in the PR.
+- **Status:** code + 37 offline tests done (167 server tests green). Box stays unticked until the live check passes.
+- **Remaining:** (1) Praful creates `server/.env` with `GEMINI_API_KEY` and `AI_PROVIDERS=gemini`; (2) confirm `GEMINI_MODEL` is a current Flash model in AI Studio (default `gemini-2.5-flash` may be retired); (3) run `node scripts/try-ai.mjs easy|medium|hard "<premise>"` once each and paste the output; (4) optional: set the `OPENAI_COMPAT_*` vars and run once with `AI_PROVIDERS=openai_compat`. If Gemini returns 400, check the schema (we strip `maxLength`; other keywords are untested live).
 
 ## T-09 · Create + get routes
 - [ ] `src/routes/cases.js`, `src/controllers/cases.controller.js`, `src/services/case.service.js` (create, loadOwned, get), `src/middleware/validate.js`, part of `tests/api/cases.test.js`.

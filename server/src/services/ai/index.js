@@ -1,6 +1,9 @@
 import { DIFFICULTY } from '../../config/difficulty.js';
 import { AppError } from '../../utils/app-error.js';
 import { ProviderError } from '../../utils/provider-error.js';
+import { geminiProvider } from './providers/gemini.js';
+import { mockProvider } from './providers/mock.js';
+import { openAiCompatProvider } from './providers/openai-compat.js';
 import { buildUserPrompt, SYSTEM_PROMPT } from './prompt.js';
 import { jsonSchemaFor } from './schema.js';
 import { validateGenerated } from './validate.js';
@@ -54,4 +57,31 @@ export function createAiService(providers, { maxAttempts = 3, timeoutMs = 45000,
       throw new AppError('AI_UNAVAILABLE', 503, 'The mystery writer is busy right now. Please try again in a minute.');
     },
   };
+}
+
+// Maps the AI_PROVIDERS list (ordered) to provider instances. A provider with missing settings is skipped
+// with a warning that names the missing variables, never their values.
+export function buildProvidersFromEnv(env, { logger = console } = {}) {
+  const names = (env.AI_PROVIDERS ?? '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const providers = [];
+  const skip = (name, why) => logger.warn?.(`[ai] provider "${name}" skipped: ${why}`);
+  const missing = (...keys) => keys.filter((k) => !env[k]);
+
+  for (const name of names) {
+    if (name === 'gemini') {
+      const m = missing('GEMINI_API_KEY');
+      if (m.length) skip(name, `${m.join(', ')} not set`);
+      else providers.push(geminiProvider({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL }));
+    } else if (name === 'openai_compat') {
+      const m = missing('OPENAI_COMPAT_BASE_URL', 'OPENAI_COMPAT_API_KEY', 'OPENAI_COMPAT_MODEL');
+      if (m.length) skip(name, `${m.join(', ')} not set`);
+      else providers.push(openAiCompatProvider({ baseUrl: env.OPENAI_COMPAT_BASE_URL, apiKey: env.OPENAI_COMPAT_API_KEY, model: env.OPENAI_COMPAT_MODEL }));
+    } else if (name === 'mock') {
+      if (env.NODE_ENV === 'production') skip(name, 'the mock provider is not allowed in production');
+      else providers.push(mockProvider());
+    } else {
+      skip(name, 'unknown provider');
+    }
+  }
+  return providers;
 }
