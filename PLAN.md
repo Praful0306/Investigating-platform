@@ -168,3 +168,11 @@ Cut in order: 3D hero → leaderboard/share → auth + history → Turnstile →
 - `scripts/try-ai.mjs` prints counts/meta, hides the solution unless `--show-solution`.
 - Not wired into `src/index.js` yet — T-09 passes `createAiService(buildProvidersFromEnv(env))` into `createApp`.
 - **Blocked on Praful:** `server/.env` with `GEMINI_API_KEY`, and confirming the current Flash model name (G4).
+
+**T-09 done (30 Oct).** 215 server tests green (45 in `cases.test.js`), 12 mutation checks all caught, plus a live curl run of the real entry point (`dev-memory.mjs` → `index.js`, mock AI): create → get → list → 403 stranger → 400/404 cases all behave per SPEC §5. Notes:
+- Routes: `POST /api/cases`, `GET /api/cases` (real history list, filter `userId` if `req.user` else `playerId`; T-12 only has to set `req.user`), `GET /api/cases/:id`.
+- `validate({params, body})` replaces `req.body` with the parsed body; a bad `:id` → `INVALID_ID`, other failures → `VALIDATION_ERROR`; body uses `z.strictObject` (zod 4) so extra fields like `score`/`playerId` are rejected.
+- Premise uses the existing `sanitizePremise` (control chars, whitespace, and 3+ quote runs collapse) — reused instead of a second regex.
+- `createCase` generates first, saves second: an AI failure leaves no document. `loadOwned(id, {playerId, user}, {withSolution})` is ready for T-10.
+- Outside T-09's file list, on purpose: `src/index.js` now builds the AI service from env and **refuses to boot with no usable provider** (and refuses `mock` in production) — `tests/unit/boot.test.js`; `scripts/dev-memory.mjs` (T-19 will reuse it for Playwright). `tests/helpers/app.js` now builds the app with a mock AI (`mode`, `provider`).
+- Rate limits, helmet, CORS, 415 guard and Turnstile are still T-11; `create` is unprotected until then.

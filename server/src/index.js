@@ -1,6 +1,7 @@
 import { env, isProd } from './config/env.js';
 import { connectDB } from './db/connect.js';
 import { createApp } from './app.js';
+import { buildProvidersFromEnv, createAiService } from './services/ai/index.js';
 
 if (isProd) {
   const missing = [];
@@ -16,6 +17,12 @@ if (!env.MONGODB_URI) {
   process.exit(1);
 }
 
+const providers = buildProvidersFromEnv(env);
+if (!providers.length) {
+  console.error('No AI provider is configured. Set AI_PROVIDERS and its keys in server/.env (see .env.example).');
+  process.exit(1);
+}
+
 try {
   await connectDB(env.MONGODB_URI);
 } catch (err) {
@@ -23,4 +30,4 @@ try {
   process.exit(1);
 }
 
-createApp().listen(env.PORT, () => console.log(`API listening on :${env.PORT} (${env.NODE_ENV})`));
+createApp({ ai: createAiService(providers) }).listen(env.PORT, () => console.log(`API listening on :${env.PORT} (${env.NODE_ENV})`));

@@ -2,6 +2,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import { env } from './config/env.js';
 import { healthRouter } from './routes/health.js';
+import { casesRouter } from './routes/cases.js';
 import { player } from './middleware/player.js';
 import { errorHandler } from './middleware/error.js';
 import { AppError } from './utils/app-error.js';
@@ -17,6 +18,7 @@ export function createApp({ ai } = {}) {
   app.use('/api', player);
   app.locals.ai = ai;
   app.use('/api/health', healthRouter);
+  app.use('/api/cases', casesRouter);
   app.use((_req, _res, next) => next(new AppError('ROUTE_NOT_FOUND', 404, 'Route not found')));
   app.use(errorHandler);
   return app;
