@@ -55,7 +55,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Verify:** `npx vitest run tests/unit/model.test.js`.
 
 ## T-05 · Difficulty + scoring
-- [ ] `src/config/difficulty.js`, `src/services/scoring.js`, `tests/unit/scoring.test.js`. Spec: `02-backend.md` §2, SPEC §8.
+- [x] `src/config/difficulty.js`, `src/services/scoring.js`, `tests/unit/scoring.test.js`. Spec: `02-backend.md` §2, SPEC §8.
 - **Verify:** `npx vitest run tests/unit/scoring.test.js` — all six table cases pass.
 
 ## T-06 · Serializers
