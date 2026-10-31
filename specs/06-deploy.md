@@ -58,7 +58,7 @@ The repo has a Blueprint (`render.yaml`) and a step-by-step checklist (`DEPLOY.m
   ]
 }
 ```
-Vercel → Add New Project → repo → Root directory `client` → Framework preset Vite → Build `npm run build` → Output `dist` → Env `VITE_API_BASE_URL=/api` (and `VITE_TURNSTILE_SITE_KEY` if used) → Deploy.
+The repo's `client/vercel.json` already contains this (with the address Render gives a service named `ai-mystery-room-api`, and a report-only CSP instead of the headers shown below; see `DEPLOY.md` §5). Vercel → Add New Project → repo → Root directory `client` → Framework preset Vite → Build `npm run build` → Output `dist` → Env `VITE_API_BASE_URL=/api` (and `VITE_TURNSTILE_SITE_KEY` if used) → Deploy.
 
 **Fallback if the rewrite misbehaves** (e.g. long generation timing out at the proxy): set `VITE_API_BASE_URL=https://<service>.onrender.com/api`, and on the server set cookies with `sameSite: 'none', secure: true` (env flag `CROSS_SITE_COOKIES=true`) and keep CORS `credentials: true` with the Vercel origin. Test in Safari afterwards.
 

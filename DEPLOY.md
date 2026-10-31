@@ -1,6 +1,6 @@
-# Deploying the backend (T-20)
+# Deploying: backend (T-20) and frontend (T-21)
 
-Everything below was rehearsed locally: the real server booted in production mode (`NODE_ENV=production`) behind a stand-in AI, and `server/scripts/smoke.mjs` passed 22/22 checks on all three difficulties. What is left needs **your** accounts. Nothing here is pushed or deployed yet; the single final push comes first (see "Order" at the bottom).
+Everything below was rehearsed locally: the real server booted in production mode (`NODE_ENV=production`) behind a stand-in AI, and `server/scripts/smoke.mjs` passed all its checks on all three difficulties. What is left needs **your** accounts. Nothing here is pushed or deployed yet; the single final push comes first (see "Order" at the bottom).
 
 ## 1. MongoDB Atlas (database)
 1. Create a free **M0** cluster (region near Singapore/Mumbai).
@@ -31,7 +31,7 @@ node server/scripts/smoke.mjs https://<service>.onrender.com easy
 node server/scripts/smoke.mjs https://<service>.onrender.com medium
 node server/scripts/smoke.mjs https://<service>.onrender.com hard
 ```
-Each run makes **one** real AI call. 22 ticks = healthy. A ✗ names the problem (database down, missing security headers, a secret in a response, cookie not HttpOnly, someone else able to open the case, a second accusation accepted).
+Each run makes **one** real AI call. 23 ticks = healthy. A ✗ names the problem (database down, missing security headers, a secret in a response, cookie not HttpOnly, someone else able to open the case, a second accusation accepted).
 Then in Render → Logs, make one request and read the `ip=` at the end of the line: it must be *your* IP. If every line shows the same address, change `TRUST_PROXY`.
 
 ## 4. Things that can still go wrong (and the fix)
@@ -41,6 +41,33 @@ Then in Render → Logs, make one request and read the `ip=` at the end of the l
 - **502s at random**: already handled (the server keeps idle connections open longer than Render's proxy).
 - **Sign-in on the live site**: add the Vercel domain in Firebase → Authentication → Settings → *Authorized domains*, and enable Email/Password and Google there.
 
+## 5. Vercel (the website, T-21)
+Do this **after** the Render service is up and its health check shows `db: "up"`.
+1. Check the address in `client/vercel.json`: the first rewrite sends `/api/*` to `https://ai-mystery-room-api.onrender.com`. That is the address Render gives a service named `ai-mystery-room-api`. If Render gave yours a different address (the name was taken, so it added letters), change that one line to your real address before deploying.
+2. Vercel → **Add New → Project** → import the repo → **Root Directory `client`** → Framework **Vite** (build `npm run build`, output `dist`).
+3. Environment variables (all public values; leave out any you do not use):
+
+| Variable | Value |
+|---|---|
+| `VITE_API_BASE_URL` | `/api` (this is what keeps the cookie first-party; do not put the Render address here) |
+| `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID` | the four values from your Firebase web app; without them the site works for guests only |
+| `VITE_TURNSTILE_SITE_KEY` | optional (and set `TURNSTILE_SECRET` on Render) |
+
+4. Deploy. Then give Render the final address: set `CLIENT_URL` to `https://<your-app>.vercel.app` there and redeploy it once.
+5. If you use sign-in: Firebase → Authentication → Settings → **Authorized domains** → add `<your-app>.vercel.app`.
+6. Check it **through the website address** (this goes through the rewrite):
+```bash
+curl -s https://<your-app>.vercel.app/api/health
+node server/scripts/smoke.mjs https://<your-app>.vercel.app easy
+node server/scripts/smoke.mjs https://<your-app>.vercel.app medium
+node server/scripts/smoke.mjs https://<your-app>.vercel.app hard
+```
+7. In a browser: open a case, **refresh the page** on `/case/<id>` and on its result (the app must come back, not a 404), and open DevTools → Console: there should be no red `Content Security Policy` lines. Try it on your phone too.
+
+**What `client/vercel.json` does:** `/api/*` goes to Render; any other path that is not a real file serves `index.html` (so refreshes on deep links work); security headers on every page; files in `/assets` are cached for a year (their names change with every build); and a Content Security Policy, delivered **report-only**.
+**The policy is report-only on purpose.** It never blocks anything; the browser only lists violations in the Console. I enforced it in a local rehearsal and the guest flow had zero violations, but real Firebase and Google sign-in and Turnstile could not be tried, so I did not risk breaking them. When sign-in works on the live site with no Console lines: in `vercel.json` rename `Content-Security-Policy-Report-Only` to `Content-Security-Policy`, redeploy, and try sign-in again (email and the Google pop-up).
+**If a long generation fails through the rewrite** (timeout at the proxy), the fallback in `specs/06-deploy.md` §3 is to call Render directly with `CROSS_SITE_COOKIES=true`.
+
 ## Order (so nothing is half-done)
 1. Finish and verify everything locally (done up to T-19; T-08, Firebase and Turnstile live checks still need your keys).
 2. One push to GitHub as the owner.
@@ -49,4 +76,4 @@ Then in Render → Logs, make one request and read the `ip=` at the end of the l
 5. T-22: final QA, README, tag `v1.0-submission`.
 
 ## What to send me when you have them
-Not the secrets themselves. Tell me only: the Render service address (`https://….onrender.com`), the Vercel address, and whether the smoke test printed 22/22 or which line failed.
+Not the secrets themselves. Tell me only: the Render service address (`https://….onrender.com`), the Vercel address, and whether the smoke test printed 23/23 or which line failed.

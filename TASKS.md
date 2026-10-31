@@ -130,6 +130,7 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 ## T-21 · Deploy frontend + smoke
 - [ ] `client/vercel.json`, Vercel project, env, rewrite. Spec: `06-deploy.md` §3–4.
 - **Verify:** smoke script passes for easy, medium, hard against the Vercel URL.
+- **Prepared (31 Oct), not deployed:** `client/vercel.json` (rewrites, security headers, long cache for `/assets`, report-only CSP), `DEPLOY.md` §5, rehearsed locally behind a production-mode API. **Remaining (needs the owner's Vercel account, the final push and a deployed backend):** deploy, set `CLIENT_URL` on Render to the Vercel address, run the smoke script against it for easy, medium and hard, tick this box.
 
 ## T-22 · QA + submit
 - [ ] Manual QA script (`05-tests.md` §7) on production, fix blockers only.
