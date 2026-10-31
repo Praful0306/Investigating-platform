@@ -1,0 +1,35 @@
+# Render Blueprint: the backend as a free web service (specs/06-deploy.md §2).
+# Secret values are NOT here: `sync: false` makes Render ask for them in its dashboard.
+services:
+  - type: web
+    name: ai-mystery-room-api
+    runtime: node
+    region: singapore
+    plan: free
+    rootDir: server
+    # --omit=dev: the test tools (including the in-memory MongoDB download) are not needed to run the API
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: AI_PROVIDERS
+        value: gemini
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash # check Google AI Studio for the current Flash model name before deploying
+      - key: TRUST_PROXY
+        value: "2" # Vercel rewrite + Render = two proxies in front of Express
+      - key: MONGODB_URI
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CLIENT_URL
+        sync: false # https://<your-app>.vercel.app
+      - key: FIREBASE_PROJECT_ID
+        sync: false # public id of your Firebase project; empty = sign-in disabled
+      - key: TURNSTILE_SECRET
+        sync: false # optional; empty = no bot check

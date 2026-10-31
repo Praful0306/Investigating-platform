@@ -14,9 +14,10 @@ Why the rewrite: the browser only ever talks to the Vercel domain, so cookies ar
 Google AI Studio (Gemini key) · MongoDB Atlas · GitHub · Vercel (sign in with GitHub) · Render (sign in with GitHub) *or* Zoho Catalyst · optional: Cloudflare (Turnstile / Workers AI / keep-alive cron) · optional: Groq or xAI key for fallback.
 
 ## 2. Backend on Render (T-20)
+The repo has a Blueprint (`render.yaml`) and a step-by-step checklist (`DEPLOY.md`); the manual steps below are the same thing by hand. The server also finishes running requests on SIGTERM (a redeploy) and keeps connections alive longer than Render's proxy (`server/src/server-lifecycle.js`).
 1. Push repo to GitHub (public).
 2. Render → New → Web Service → pick repo.
-   - Root directory: `server` · Runtime: Node · Build: `npm ci` · Start: `npm start` · Instance: Free · Region: Singapore (closest to India).
+   - Root directory: `server` · Runtime: Node · Build: `npm ci --omit=dev` · Start: `npm start` · Instance: Free · Region: Singapore (closest to India).
    - Health check path: `/api/health`.
 3. Environment variables:
    ```
@@ -30,7 +31,7 @@ Google AI Studio (Gemini key) · MongoDB Atlas · GitHub · Vercel (sign in with
    TRUST_PROXY=2
    ```
    (Render sets `PORT` itself; `env.js` reads it.)
-4. Deploy → open `https://<service>.onrender.com/api/health` → `{"ok":true,"db":"up"}`.
+4. Deploy → open `https://<service>.onrender.com/api/health` → `{"ok":true,"db":"up"}`, then `node server/scripts/smoke.mjs https://<service>.onrender.com easy` (22 checks; one AI call).
 5. Free instances sleep after ~15 min idle; first request can take ~1 min. Mitigations: Home page wake ping (built in), and during the grading window an external ping every 10 min (e.g. a Cloudflare Worker cron trigger or cron-job.org calling `/api/health`). Check Render's current free-tier policy before relying on this.
 
 ### Alternative: Zoho Catalyst AppSail

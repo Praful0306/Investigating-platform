@@ -1,6 +1,8 @@
 import { env, isProd } from './config/env.js';
 import { connectDB } from './db/connect.js';
+import mongoose from 'mongoose';
 import { createApp } from './app.js';
+import { createShutdown, tuneServer } from './server-lifecycle.js';
 import { buildProvidersFromEnv, createAiService } from './services/ai/index.js';
 
 if (isProd) {
@@ -30,4 +32,13 @@ try {
   process.exit(1);
 }
 
-createApp({ ai: createAiService(providers) }).listen(env.PORT, () => console.log(`API listening on :${env.PORT} (${env.NODE_ENV})`));
+const server = tuneServer(
+  createApp({ ai: createAiService(providers) }).listen(env.PORT, () => console.log(`API listening on :${env.PORT} (${env.NODE_ENV})`)),
+);
+
+// Render stops the service with SIGTERM on every redeploy: finish running requests, close the database, then exit.
+const shutdown = createShutdown({ server, disconnect: () => mongoose.disconnect() });
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+// A bug in one request must be visible in the logs, not silently swallowed (only the message: never request data).
+process.on('unhandledRejection', (reason) => console.error(`Unhandled rejection: ${reason?.message ?? reason}`));
