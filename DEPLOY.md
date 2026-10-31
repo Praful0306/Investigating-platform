@@ -21,7 +21,7 @@ Everything below was rehearsed locally: the real server booted in production mod
 | `FIREBASE_PROJECT_ID` | your Firebase project id (public; leave empty to run without sign-in) |
 | `TURNSTILE_SECRET` | optional; leave empty for no bot check |
 
-   Already set by the blueprint: `NODE_ENV=production`, `AI_PROVIDERS=gemini`, `GEMINI_MODEL=gemini-2.5-flash`, `TRUST_PROXY=2`.
+   Already set by the blueprint: `NODE_ENV=production`, `AI_PROVIDERS=gemini,openai_compat`, `GEMINI_MODEL=gemini-2.5-flash`, `TRUST_PROXY=1`.
    **Check `GEMINI_MODEL`**: Google retires model names. Open AI Studio, confirm the current Flash model, and change the value in Render if it differs.
 4. Deploy, then open `https://<service>.onrender.com/api/health`. Expected: `{"ok":true,"db":"up",…}`. The first request after the service slept can take about a minute.
 
@@ -32,7 +32,26 @@ node server/scripts/smoke.mjs https://<service>.onrender.com medium
 node server/scripts/smoke.mjs https://<service>.onrender.com hard
 ```
 Each run makes **one** real AI call. 23 ticks = healthy. A ✗ names the problem (database down, missing security headers, a secret in a response, cookie not HttpOnly, someone else able to open the case, a second accusation accepted).
-Then in Render → Logs, make one request and read the `ip=` at the end of the line: it must be *your* IP. If every line shows the same address, change `TRUST_PROXY`.
+**Proxy setting (`TRUST_PROXY=1`, already in the blueprint).** It was measured on the live service: Render adds exactly one address to `X-Forwarded-For`, so the right value is **1**. With 2, a visitor could send a made-up `X-Forwarded-For` and get a fresh rate-limit counter every time. To check after any change, run this twice and compare the `ratelimit: …remaining=` numbers: they must keep counting down together (a made-up address must NOT start a fresh counter):
+```bash
+curl -s -D - -o /dev/null -H "X-Forwarded-For: 1.1.1.1" https://<service>.onrender.com/api/health | grep -i ratelimit:
+curl -s -D - -o /dev/null -H "X-Forwarded-For: 2.2.2.2" https://<service>.onrender.com/api/health | grep -i ratelimit:
+```
+Behind the Vercel rewrite all visitors share the proxy's address, so the per-IP limits (600 requests a minute, 120 new mysteries a day, 300 sign-in calls per 15 minutes) are shared ceilings; the limit on one person is the per-player one (5 new mysteries per 10 minutes).
+
+## 3a. Backup AI (optional, used only when Gemini fails)
+If Gemini is out of free quota or down, the server tries a second AI provider, then gives up with a friendly message. The backup can be **any OpenAI-compatible service**. This is only the name of the protocol: the game never talks to OpenAI itself unless you point it there. Pick one:
+- **xAI Grok:** base URL `https://api.x.ai/v1`, model id from the xAI console. xAI's API usually needs prepaid credits, so check the console for any free allowance.
+- **Groq (groq.com, a different company from Grok):** has a free tier. Base URL `https://api.groq.com/openai/v1`, model id from the Groq console (for example a Llama model; names change, so copy it from the console).
+
+In Render → Environment add three variables (the blueprint already lists `AI_PROVIDERS=gemini,openai_compat`; in a hand-made service set it yourself):
+```
+AI_PROVIDERS=gemini,openai_compat
+OPENAI_COMPAT_BASE_URL=<the base URL above>
+OPENAI_COMPAT_API_KEY=<your key>
+OPENAI_COMPAT_MODEL=<the model id>
+```
+Leave the three `OPENAI_COMPAT_*` values empty to run on Gemini alone. Then Manual Deploy. To test a key before deploying, put the same four lines in `server/.env`, set `AI_PROVIDERS=openai_compat` for one run, and use `node scripts/try-ai.mjs easy "A stolen trophy at a college cricket final"`. A free model that answers in invalid JSON is retried with feedback; if it keeps failing, drop it.
 
 ## 3b. Keeping the free service awake (examiners can open it at any time)
 A free Render service goes to sleep after **15 minutes** without requests, and the next visitor waits about a minute. A sleeping server cannot wake itself, so there are three layers:

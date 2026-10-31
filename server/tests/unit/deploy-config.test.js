@@ -28,12 +28,20 @@ describe('render.yaml', () => {
 
   it('runs in production with the real AI provider, never the mock', () => {
     expect(envBlock('NODE_ENV')).toBe('value: production');
-    expect(envBlock('AI_PROVIDERS')).toBe('value: gemini');
-    expect(blueprint).not.toMatch(/AI_PROVIDERS[\s\S]{0,40}mock/);
+    expect(envBlock('AI_PROVIDERS')).toBe('value: gemini,openai_compat');
+    expect(blueprint).not.toMatch(/AI_PROVIDERS[\s\S]{0,120}mock/);
   });
 
-  it('counts two proxies in front of Express (Vercel rewrite + Render)', () => {
-    expect(envBlock('TRUST_PROXY')).toBe('value: "2"');
+  it('the backup AI provider is optional and its key is asked for in the dashboard, never written in the file', () => {
+    for (const key of ['OPENAI_COMPAT_BASE_URL', 'OPENAI_COMPAT_API_KEY', 'OPENAI_COMPAT_MODEL']) expect(envBlock(key), key).toBe('sync: false');
+  });
+
+  it('never sends the game to OpenAI itself: the backup is a generic compatible endpoint the owner chooses', () => {
+    expect(blueprint).not.toMatch(/api\.openai\.com|gpt-/i);
+  });
+
+  it('trusts exactly ONE proxy hop: Render appends a single address, and a larger number would trust one the visitor can fake', () => {
+    expect(envBlock('TRUST_PROXY')).toBe('value: "1"');
   });
 
   it.each(['MONGODB_URI', 'GEMINI_API_KEY', 'CLIENT_URL', 'FIREBASE_PROJECT_ID', 'TURNSTILE_SECRET'])('%s is asked for in the dashboard, not written in the file', (key) => {

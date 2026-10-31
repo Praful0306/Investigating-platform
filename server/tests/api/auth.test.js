@@ -88,8 +88,8 @@ describe('POST /api/auth/session', () => {
     for (const l of lines) expect(String(l)).not.toMatch(/garbage-token-value|eyJ/);
   });
 
-  it('is rate limited per IP (60 / 15 min by default)', async () => {
-    expect(DEFAULT_LIMITS.auth).toEqual({ windowMs: 15 * 60_000, limit: 60 });
+  it('is rate limited per IP (300 / 15 min by default)', async () => {
+    expect(DEFAULT_LIMITS.auth).toEqual({ windowMs: 15 * 60_000, limit: 300 });
     const limited = makeApp({ firebase: { projectId: PROJECT, jwks: idp.jwks }, limits: { auth: { limit: 2 } } });
     await session(request(limited), alice).expect(200);
     await session(request(limited), alice).expect(200);

@@ -25,10 +25,10 @@ The repo has a Blueprint (`render.yaml`) and a step-by-step checklist (`DEPLOY.m
    MONGODB_URI=<atlas uri>
    GEMINI_API_KEY=<key>
    GEMINI_MODEL=gemini-2.5-flash         # or the current Flash model in AI Studio
-   AI_PROVIDERS=gemini                   # add ,openai_compat once fallback keys are set
+   AI_PROVIDERS=gemini,openai_compat     # the backup is skipped (with a log line) until its three OPENAI_COMPAT_* values are set
    CLIENT_URL=https://<your-app>.vercel.app
    FIREBASE_PROJECT_ID=<your Firebase project id>   # public; add the Vercel domain to Firebase Auth > Authorized domains
-   TRUST_PROXY=2
+   TRUST_PROXY=1
    ```
    (Render sets `PORT` itself; `env.js` reads it.)
 4. Deploy → open `https://<service>.onrender.com/api/health` → `{"ok":true,"db":"up"}`, then `node server/scripts/smoke.mjs https://<service>.onrender.com easy` (22 checks; one AI call).

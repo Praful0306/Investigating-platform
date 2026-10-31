@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import mongoose from 'mongoose';
+import * as connect from '../../src/db/connect.js';
 import request from 'supertest';
 import { makeApp } from '../helpers/app.js';
 import { useMemoryDb } from '../helpers/db.js';
@@ -14,6 +16,44 @@ describe('GET /api/health', () => {
     expect(res.body.ok).toBe(true);
     expect(res.body.db).toBe('up');
     expect(new Date(res.body.time).toISOString()).toBe(res.body.time);
+  });
+
+  describe('when the database is down', () => {
+    afterEach(() => vi.restoreAllMocks());
+    const dbDown = () => vi.spyOn(connect, 'dbState').mockReturnValue('down');
+
+    it('answers 503 with ok:false and db:down, so Render and a monitor can tell something is wrong', async () => {
+      dbDown();
+      const res = await request(app).get('/api/health').expect(503);
+      expect(res.body).toMatchObject({ ok: false, db: 'down' });
+      expect(new Date(res.body.time).toISOString()).toBe(res.body.time);
+    });
+
+    it('is still a well-formed JSON answer with the usual headers (it never crashes or hangs)', async () => {
+      dbDown();
+      const res = await request(app).get('/api/health');
+      expect(res.headers['content-type']).toMatch(/application\/json/);
+      expect(res.headers['x-content-type-options']).toBe('nosniff');
+    });
+
+    it('comes back to 200 as soon as the database is back', async () => {
+      const spy = dbDown();
+      await request(app).get('/api/health').expect(503);
+      spy.mockRestore();
+      const res = await request(app).get('/api/health').expect(200);
+      expect(res.body).toMatchObject({ ok: true, db: 'up' });
+    });
+
+    it('any state other than connected (disconnected, connecting, disconnecting) counts as down', () => {
+      const spy = vi.spyOn(mongoose.connection, 'readyState', 'get');
+      for (const state of [0, 2, 3, 99]) {
+        spy.mockReturnValue(state);
+        expect(connect.dbState()).toBe('down');
+      }
+      spy.mockReturnValue(1);
+      expect(connect.dbState()).toBe('up');
+      spy.mockRestore();
+    });
   });
 
   it('issues an httpOnly mr_pid cookie to a new visitor', async () => {

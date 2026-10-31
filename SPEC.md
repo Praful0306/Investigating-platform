@@ -196,7 +196,7 @@ Returned by create and get. **Never contains** `solution`, `culpritId`, `explana
 ### 5.4 Endpoints
 
 #### `GET /api/health`
-200 `{ "ok": true, "db": "up" | "down", "time": "<ISO>" }`. No DB writes. Used for wake-up.
+200 `{ "ok": true, "db": "up", "time": "<ISO>" }` when the database is connected; **503** `{ "ok": false, "db": "down", "time": "<ISO>" }` when it is not (so a health check or uptime monitor can see a broken instance). No DB writes. Used for wake-up (any answer wakes a sleeping server).
 
 #### `POST /api/cases` — generate a mystery
 Request:
@@ -397,7 +397,7 @@ OPENAI_COMPAT_API_KEY=
 OPENAI_COMPAT_MODEL=
 FIREBASE_PROJECT_ID=                      # Tier 2: your Firebase project id (public); empty = sign-in disabled
 TURNSTILE_SECRET=                         # optional; empty = disabled
-TRUST_PROXY=1                             # hops in front of Express (Render=1; Vercel rewrite + Render=2)
+TRUST_PROXY=1                             # proxy hops to trust: measured on Render, a visitor's X-Forwarded-For arrives with ONE address appended, so 1. Larger lets visitors fake their IP
 CROSS_SITE_COOKIES=false                  # true only if the client calls the API cross-origin (no Vercel rewrite)
 ```
 `client/.env`
@@ -440,3 +440,4 @@ ai-mystery-room/
 - v1.0 — initial frozen spec.
 - v1.0.1 — §5.2: added `415 UNSUPPORTED_MEDIA_TYPE` (required by `specs/03-security.md` S13; was missing from the error table). A malformed or over-10 kb JSON body is reported as `400 VALIDATION_ERROR`.
 - v1.1.0 — Tier 2 authentication is Firebase Authentication (email + password and Google) instead of our own email/password + JWT cookie. Changed §4.6, §5.1, §5.2 (`AUTH_UNAVAILABLE` added, `EMAIL_TAKEN` removed), §5.4 (`/api/auth/*` replaced by `POST /api/auth/session`), §6.1 (`userId` is the Firebase uid), §6.2 (no `User` collection), §9.8, §11 (`FIREBASE_PROJECT_ID`, `VITE_FIREBASE_*`; `JWT_SECRET` removed). Reason: owner asked for a polished sign-in with Google and chose Firebase.
+- v1.1.1 — §5.4 `/api/health` answers 503 with `ok:false` when the database is down. §11 `TRUST_PROXY` is 1 (measured on the live deployment: with 2, a faked `X-Forwarded-For` got its own rate-limit counter). `specs/03-security.md`: per-IP limits are now ceilings shared by everyone behind the Vercel rewrite (global 600/min, daily 120, auth 300 per 15 min); the per-player create limit (5 per 10 min) is unchanged. All API responses carry `Cache-Control: no-store`. Generation has a 60 s overall deadline, and each backup AI provider is guaranteed at least one attempt within the 3-attempt total.

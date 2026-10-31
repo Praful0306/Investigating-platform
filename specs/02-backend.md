@@ -444,7 +444,7 @@ cd server && npx vitest run tests/api/cases.test.js
 - `requireAuth` → 401 `UNAUTHORIZED`.
 - `POST /api/auth/session` (requireAuth): `Case.updateMany({ playerId: req.playerId, userId: null }, { $set: { userId: req.user.id } })`, then `{ user, claimed }`.
 - `GET /api/cases`: filter `req.user ? { userId } : { playerId }`, sort `-createdAt`, limit 50, `toCaseSummary`.
-- Auth limiter: 60 / 15 min per IP on `/api/auth`.
+- Auth limiter: 300 / 15 min per IP on `/api/auth`.
 
 ### Verify T-12
 `tests/api/auth.test.js` (a local key pair stands in for Google's keys): valid token → session 200; expired / wrong issuer / wrong audience / `alg:none` / HS256 / forged signature → 401; guest creates a case then signs in → `GET /api/cases` lists it; a second user cannot read it; another browser's cases are never claimed.

@@ -6,10 +6,12 @@ const DAY = 24 * 60 * MINUTE;
 
 // specs/03-security.md §2. Tests lower these through createApp({ limits }).
 export const DEFAULT_LIMITS = Object.freeze({
-  global: { windowMs: MINUTE, limit: 120 }, // per IP, every /api route
+  // Behind the Vercel rewrite every visitor reaches the API from the proxy's address, so these per-IP counters are shared
+  // by many people: they are a ceiling against floods and runaway Gemini use, not a per-person limit (that is `create`).
+  global: { windowMs: MINUTE, limit: 600 }, // per IP, every /api route
   create: { windowMs: 10 * MINUTE, limit: 5 }, // per player: each new case costs one AI call
-  daily: { windowMs: DAY, limit: 20 }, // per IP: stops "clear the cookie, ask again"
-  auth: { windowMs: 15 * MINUTE, limit: 60 }, // per IP: the client calls /auth/session once per sign-in
+  daily: { windowMs: DAY, limit: 120 }, // per IP: stops "clear the cookie, ask again" (a cost ceiling for the AI)
+  auth: { windowMs: 15 * MINUTE, limit: 300 }, // per IP: the client calls /auth/session once per sign-in
 });
 
 // Logged-in users are counted by account, guests by their cookie.

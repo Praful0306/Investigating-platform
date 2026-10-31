@@ -2,7 +2,9 @@ import { DIFFICULTY } from '../../config/difficulty.js';
 import { GeneratedCaseSchema } from './schema.js';
 
 const GIVEAWAY = /culprit|guilty|did it|the killer|the thief|confessed/i;
-const TAG = /<[^>]*>/g;
+// A real HTML tag or comment: "<" must be followed by a letter, or "/" and a letter, or "!--". Ordinary text such as
+// "<5 minutes" or "a<b and c>d" is not a tag and must survive (a bare /<[^>]*>/ deleted everything up to the next ">").
+const TAG = /<\/?[A-Za-z][^<>]*>|<!--[\s\S]*?-->/g;
 
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // Whole-name match, any case, Unicode-aware: "Ann" must not match "annual", "Al" must not match "alibi".

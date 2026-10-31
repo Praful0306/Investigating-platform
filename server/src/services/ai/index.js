@@ -8,18 +8,26 @@ import { buildUserPrompt, SYSTEM_PROMPT } from './prompt.js';
 import { jsonSchemaFor } from './schema.js';
 import { validateGenerated } from './validate.js';
 
-// A provider that ignores the abort signal must still not hang the request.
-function withTimeout(promise, signal) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => {
-      signal.addEventListener('abort', () => reject(new ProviderError('timed out', 504, true)), { once: true });
-    }),
-  ]);
+export const DEFAULT_DEADLINE_MS = 60_000;
+
+// A provider that ignores the abort signal must still not hang the request. The abort listener is removed as soon as
+// the race is over, so a quick success does not leave a listener (and its closure) behind for the rest of the timeout.
+export function withTimeout(promise, signal) {
+  let onAbort;
+  const timeout = new Promise((_, reject) => {
+    onAbort = () => reject(new ProviderError('timed out', 504, true));
+    if (signal.aborted) onAbort();
+    else signal.addEventListener('abort', onAbort, { once: true });
+  });
+  return Promise.race([promise, timeout]).finally(() => signal.removeEventListener('abort', onAbort));
 }
 
 // provider: { name, model, generate({ system, prompt, jsonSchema, signal }) => Promise<string> }
-export function createAiService(providers, { maxAttempts = 3, timeoutMs = 45000, logger = console } = {}) {
+// maxAttempts is the total across all providers, but every provider gets at least one try: a provider that is not the
+// last one stops one attempt short per provider still waiting behind it (so with more providers than maxAttempts the
+// total is the number of providers). deadlineMs is the overall time limit: a
+// proxy or a phone will not wait longer, and a slow answer after the visitor has left only wastes quota.
+export function createAiService(providers, { maxAttempts = 3, timeoutMs = 45000, deadlineMs = DEFAULT_DEADLINE_MS, logger = console } = {}) {
   return {
     async generateCase({ premise, difficulty }) {
       const cfg = DIFFICULTY[difficulty];
@@ -27,29 +35,37 @@ export function createAiService(providers, { maxAttempts = 3, timeoutMs = 45000,
       let feedback = [];
       let sawInvalid = false;
       const t0 = Date.now();
+      const remaining = () => deadlineMs - (Date.now() - t0);
 
-      for (const p of providers) {
-        while (attempts < maxAttempts) {
+      providerLoop:
+      for (const [index, p] of providers.entries()) {
+        const reserved = providers.length - 1 - index; // tries kept back for the providers behind this one
+        let triedHere = 0;
+        while (triedHere === 0 || attempts < maxAttempts - reserved) {
+          if (remaining() <= 0) break providerLoop;
           attempts++;
+          triedHere++;
+
+          // our own code: a bug here must surface as a 500, not be mistaken for a provider outage
+          const prompt = buildUserPrompt({ premise, difficulty, cfg, feedback });
+          const jsonSchema = jsonSchemaFor(cfg);
+          const signal = AbortSignal.timeout(Math.min(timeoutMs, remaining()));
+
+          let raw;
           try {
-            const signal = AbortSignal.timeout(timeoutMs);
-            const raw = await withTimeout(p.generate({
-              system: SYSTEM_PROMPT,
-              prompt: buildUserPrompt({ premise, difficulty, cfg, feedback }),
-              jsonSchema: jsonSchemaFor(cfg),
-              signal,
-            }), signal);
-            const v = validateGenerated(raw, difficulty);
-            if (v.ok) {
-              return { data: v.data, meta: { provider: p.name, model: p.model, attempts, latencyMs: Date.now() - t0 } };
-            }
-            sawInvalid = true;
-            feedback = v.errors;
-            logger.warn?.(`[ai] ${p.name} invalid output (attempt ${attempts}): ${v.errors.join('; ')}`);
+            raw = await withTimeout(p.generate({ system: SYSTEM_PROMPT, prompt, jsonSchema, signal }), signal);
           } catch (err) {
             logger.warn?.(`[ai] ${p.name} provider error (attempt ${attempts}): ${err.status ?? ''} ${err.message}`);
             break; // provider down / quota / timeout -> next provider
           }
+
+          const v = validateGenerated(raw, difficulty);
+          if (v.ok) {
+            return { data: v.data, meta: { provider: p.name, model: p.model, attempts, latencyMs: Date.now() - t0 } };
+          }
+          sawInvalid = true;
+          feedback = v.errors;
+          logger.warn?.(`[ai] ${p.name} invalid output (attempt ${attempts}): ${v.errors.join('; ')}`);
         }
       }
 

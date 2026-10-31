@@ -24,12 +24,12 @@ Source of truth: SPEC §9. Goal: a grader opening DevTools can't find the culpri
 - [ ] CORS: `origin` callback allowing only values in `CLIENT_URL` (comma list) and `undefined` origin (curl/health); `credentials: true`.
 - [ ] `express.json({ limit: '10kb' })`; requests with a body but non-JSON content type → 415 `UNSUPPORTED_MEDIA_TYPE`.
 - [ ] Rate limits (`express-rate-limit`, `standardHeaders: 'draft-7'`, `legacyHeaders: false`, handler returns our error envelope with 429 `RATE_LIMITED`):
-  - global: 120 / min / IP on `/api`
+  - global: 600 / min / IP on `/api` (a flood ceiling: behind the Vercel rewrite many visitors share the proxy's address)
   - create: 5 / 10 min keyed by `req.user?.id ?? req.playerId`
-  - daily create: 20 / 24 h keyed by IP (stops cookie-clearing bypass)
-  - auth: 60 / 15 min / IP on `/api/auth` (the client calls it once per sign-in, so it is looser than a password-login limit; Firebase rate-limits the actual sign-ins)
+  - daily create: 120 / 24 h keyed by IP (a cost ceiling for the AI; stops cookie-clearing bypass; shared by visitors behind the proxy, so the per-player limit below is what limits one person)
+  - auth: 300 / 15 min / IP on `/api/auth` (the client calls it once per sign-in, so it is looser than a password-login limit; Firebase rate-limits the actual sign-ins)
   - limits read from config so tests can set them low.
-- [ ] `trust proxy` set from `TRUST_PROXY` so the limiter sees the real IP (Render = 1; Vercel rewrite → Render = 2). Wrong value = everyone shares one IP bucket, so check `req.ip` in logs after deploy.
+- [ ] `trust proxy` set from `TRUST_PROXY` = **1** on Render (measured: Render appends exactly one address; 2 trusts a value the visitor controls and lets them dodge the per-IP limits). Behind the Vercel rewrite the counted address is the proxy's. Wrong value = everyone shares one IP bucket, so check `req.ip` in logs after deploy.
 - [ ] Turnstile (optional): if `TURNSTILE_SECRET` set, `POST /api/cases` requires `turnstileToken`; verify via `POST https://challenges.cloudflare.com/turnstile/v0/siteverify` (form fields `secret`, `response`, `remoteip`), fail → 403 `CAPTCHA_FAILED`. Skipped in test.
 - [ ] Cookies: `httpOnly`, `sameSite:'lax'`, `secure: isProd`, `path:'/'`.
 - [ ] Error middleware hides details in prod.

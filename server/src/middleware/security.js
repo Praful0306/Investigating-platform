@@ -8,6 +8,13 @@ export function corsMiddleware(clientUrl) {
   return cors({ origin: (origin, cb) => cb(null, !origin || allowed.has(origin)), credentials: true });
 }
 
+// Everything under /api is one visitor's cases, history or cookie: no shared cache (Vercel's and Render's proxies, a CDN
+// rule added later) and no browser may keep any of it, whatever the answer was (errors and 429s included).
+export function noStore(_req, res, next) {
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+}
+
 // SPEC S13: a body must be JSON. Blocks form / text / multipart posts, which is also what cross-site forms send.
 export function requireJson(req, _res, next) {
   const hasBody = Number(req.headers['content-length']) > 0 || req.headers['transfer-encoding'] !== undefined;

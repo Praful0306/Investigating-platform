@@ -18,11 +18,11 @@ services:
       - key: NODE_ENV
         value: production
       - key: AI_PROVIDERS
-        value: gemini
+        value: gemini,openai_compat # Gemini first; the backup is used only if its three OPENAI_COMPAT_* values below are filled in
       - key: GEMINI_MODEL
         value: gemini-2.5-flash # check Google AI Studio for the current Flash model name before deploying
       - key: TRUST_PROXY
-        value: "2" # Vercel rewrite + Render = two proxies in front of Express
+        value: "1" # Render adds ONE address to X-Forwarded-For. 2 would trust one the visitor can fake and let them dodge the rate limits
       - key: MONGODB_URI
         sync: false
       - key: GEMINI_API_KEY
@@ -33,3 +33,10 @@ services:
         sync: false # public id of your Firebase project; empty = sign-in disabled
       - key: TURNSTILE_SECRET
         sync: false # optional; empty = no bot check
+      # Backup AI, used only when Gemini fails. Any OpenAI-compatible endpoint (xAI Grok, Groq, ...). NOT OpenAI itself.
+      - key: OPENAI_COMPAT_BASE_URL
+        sync: false # e.g. https://api.x.ai/v1  or  https://api.groq.com/openai/v1
+      - key: OPENAI_COMPAT_API_KEY
+        sync: false
+      - key: OPENAI_COMPAT_MODEL
+        sync: false # the model id from that provider's console

@@ -56,6 +56,37 @@ describe('valid output', () => {
     expect(r.ok).toBe(true);
     expect(r.data.title).toBe('The Mock alert(1)Case');
   });
+
+  it('keeps ordinary text that merely contains < and > signs (only real HTML tags are removed)', () => {
+    const c = base();
+    c.clues[0].description = 'The timer read <5 minutes before nine and > 3 minutes after; also 3 < 4 and 9>2.';
+    const r = run(c);
+    expect(r.ok).toBe(true);
+    expect(r.data.clues[0].description).toBe('The timer read <5 minutes before nine and > 3 minutes after; also 3 < 4 and 9>2.');
+  });
+
+  it.each([
+    ['a closing tag', 'x</b>y', 'xy'],
+    ['a tag with attributes', 'x<a href="https://e.com" onclick=alert(1)>y</a>z', 'xyz'],
+    ['a self-closing tag', 'x<br/>y', 'xy'],
+    ['an uppercase tag', 'x<SCRIPT>y</SCRIPT>z', 'xyz'],
+    ['a comment', 'x<!-- hidden -->y', 'xy'],
+    ['an image with an event handler', 'x<img src=x onerror=alert(1)>y', 'xy'],
+    ['a tag split across lines', 'x<div\nclass="a">y</div>z', 'xyz'],
+  ])('still removes %s', (_name, input, expected) => {
+    const c = base();
+    c.clues[1].title = input;
+    const r = run(c);
+    expect(r.ok).toBe(true);
+    expect(r.data.clues[1].title).toBe(expected);
+  });
+
+  it('does not eat text between a stray < and a later real tag', () => {
+    const c = base();
+    c.clues[2].description = 'Seen at 9 <10 m away <b>clearly</b>.';
+    const r = run(c);
+    expect(r.data.clues[2].description).toBe('Seen at 9 <10 m away clearly.');
+  });
 });
 
 describe('not JSON / wrong shape', () => {

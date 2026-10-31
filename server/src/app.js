@@ -9,7 +9,7 @@ import { optionalAuth } from './middleware/auth.js';
 import { player } from './middleware/player.js';
 import { errorHandler } from './middleware/error.js';
 import { createLimiters } from './middleware/rate-limit.js';
-import { corsMiddleware, requestLogger, requireJson } from './middleware/security.js';
+import { corsMiddleware, noStore, requestLogger, requireJson } from './middleware/security.js';
 import { turnstile } from './middleware/turnstile.js';
 import { createTokenVerifier } from './services/firebase-token.js';
 import { AppError } from './utils/app-error.js';
@@ -32,6 +32,7 @@ export function createApp({
   if (logger) app.use(requestLogger(logger)); // first, so every response is logged, including 415 and 429
   app.use(helmet());
   app.use(corsMiddleware(clientUrl));
+  app.use('/api', noStore); // before the limiter, so even a 429 carries it
   app.use('/api', limiters.global); // before body parsing: floods and junk bodies are refused cheaply
   app.use(requireJson);
   app.use(express.json({ limit: '10kb' }));

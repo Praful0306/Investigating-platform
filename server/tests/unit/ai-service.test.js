@@ -66,13 +66,86 @@ describe('createAiService.generateCase', () => {
     expect([e.code, e.status]).toEqual(['AI_UNAVAILABLE', 503]);
   });
 
-  it('attempts are capped at 3 in total across providers', async () => {
+  it('attempts are capped at 3 in total across providers, but a backup provider always gets at least one try', async () => {
     const bad = mockProvider({ mode: 'invalid-always', name: 'bad' });
     const good = mockProvider({ name: 'good' });
-    const e = await fail(svc([bad, good]).generateCase(req));
+    const { meta } = await svc([bad, good]).generateCase(req);
+    expect(bad.calls).toHaveLength(2); // the first provider stops one short, keeping a try in reserve
+    expect(good.calls).toHaveLength(1);
+    expect(meta).toMatchObject({ provider: 'good', attempts: 3 });
+  });
+
+  it('when the backup fails too, the whole thing still stops at 3 attempts and reports 502', async () => {
+    const bad1 = mockProvider({ mode: 'invalid-always', name: 'bad1' });
+    const bad2 = mockProvider({ mode: 'invalid-always', name: 'bad2' });
+    const e = await fail(svc([bad1, bad2]).generateCase(req));
     expect(e.code).toBe('AI_GENERATION_FAILED');
-    expect(bad.calls).toHaveLength(3);
-    expect(good.calls).toHaveLength(0);
+    expect(bad1.calls.length + bad2.calls.length).toBe(3);
+  });
+
+  it('a primary that fails once with a provider error leaves the backup two attempts', async () => {
+    const down = mockProvider({ mode: 'unavailable', name: 'down' });
+    const flaky = mockProvider({ mode: 'invalid-once', name: 'flaky' });
+    const { meta } = await svc([down, flaky]).generateCase(req);
+    expect(meta).toMatchObject({ provider: 'flaky', attempts: 3 });
+    expect(down.calls).toHaveLength(1);
+    expect(flaky.calls).toHaveLength(2);
+  });
+
+  it('with three providers each one still gets a try (the total is then the number of providers)', async () => {
+    const a1 = mockProvider({ mode: 'invalid-always', name: 'a1' });
+    const a2 = mockProvider({ mode: 'invalid-always', name: 'a2' });
+    const a3 = mockProvider({ name: 'a3' });
+    const { meta } = await svc([a1, a2, a3], { maxAttempts: 3 }).generateCase(req);
+    expect(meta.provider).toBe('a3');
+    expect(a1.calls).toHaveLength(1);
+    expect(a2.calls).toHaveLength(1);
+    expect(a3.calls).toHaveLength(1);
+  });
+
+  it('even with maxAttempts 1, every configured provider is tried once', async () => {
+    const a = mockProvider({ mode: 'invalid-always', name: 'a' });
+    const b = mockProvider({ name: 'b' });
+    const { meta } = await svc([a, b], { maxAttempts: 1 }).generateCase(req);
+    expect(a.calls).toHaveLength(1); // the first one was really tried, not skipped for lack of budget
+    expect(meta.provider).toBe('b');
+    expect(b.calls).toHaveLength(1);
+  });
+
+  it.each([0, -5])('a deadline of %i ms means no attempt at all (and no crash from a negative timeout)', async (deadlineMs) => {
+    const p = mockProvider();
+    const e = await fail(svc([p], { deadlineMs }).generateCase(req));
+    expect(e).toBeInstanceOf(AppError);
+    expect(e.code).toBe('AI_UNAVAILABLE');
+    expect(p.calls).toHaveLength(0);
+  });
+
+  it('gives up at the overall deadline instead of running every attempt to its own timeout', async () => {
+    const slowInvalid = { name: 'slow', model: 'x', generate: async () => { await new Promise((r) => setTimeout(r, 120)); return '{"oops":true}'; } };
+    const t0 = Date.now();
+    const e = await fail(svc([slowInvalid], { maxAttempts: 10, deadlineMs: 300, timeoutMs: 1000 }).generateCase(req));
+    expect(e.code).toBe('AI_GENERATION_FAILED'); // it did answer, just badly
+    expect(Date.now() - t0).toBeLessThan(900);
+  });
+
+  it('the deadline also cuts a single hanging request short, even when its own timeout is longer', async () => {
+    const t0 = Date.now();
+    const e = await fail(svc([hang], { timeoutMs: 5000, deadlineMs: 120 }).generateCase(req));
+    expect(e.code).toBe('AI_UNAVAILABLE');
+    expect(Date.now() - t0).toBeLessThan(1500);
+  });
+
+  it('the deadline is shared with the backup: a slow primary leaves it only the time that is left', async () => {
+    const slow = { name: 'slow', model: 'x', generate: () => new Promise(() => {}) };
+    const t0 = Date.now();
+    const { meta } = await svc([slow, mockProvider({ name: 'fast' })], { timeoutMs: 150, deadlineMs: 2000 }).generateCase(req);
+    expect(meta.provider).toBe('fast');
+    expect(Date.now() - t0).toBeLessThan(1500);
+  });
+
+  it('the default overall deadline is 60 s: inside what a proxy and a phone will wait', async () => {
+    const { DEFAULT_DEADLINE_MS } = await import('../../src/services/ai/index.js');
+    expect(DEFAULT_DEADLINE_MS).toBe(60_000);
   });
 
   it('invalid output followed by a provider outage still reports 502 (the AI did answer)', async () => {

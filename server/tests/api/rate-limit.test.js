@@ -15,9 +15,10 @@ const create = (agent, ip) => {
 
 describe('limits configuration', () => {
   it('defaults are the numbers in specs/03-security.md', () => {
-    expect(DEFAULT_LIMITS.global).toEqual({ windowMs: 60_000, limit: 120 });
+    expect(DEFAULT_LIMITS.global).toEqual({ windowMs: 60_000, limit: 600 });
     expect(DEFAULT_LIMITS.create).toEqual({ windowMs: 10 * 60_000, limit: 5 });
-    expect(DEFAULT_LIMITS.daily).toEqual({ windowMs: 24 * 60 * 60_000, limit: 20 });
+    expect(DEFAULT_LIMITS.daily).toEqual({ windowMs: 24 * 60 * 60_000, limit: 120 });
+    expect(DEFAULT_LIMITS.auth).toEqual({ windowMs: 15 * 60_000, limit: 300 });
   });
 
   it('the create limiter is keyed by the logged-in user, else by the player cookie', () => {
