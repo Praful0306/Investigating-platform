@@ -2,7 +2,7 @@
 # Secret values are NOT here: `sync: false` makes Render ask for them in its dashboard.
 services:
   - type: web
-    name: ai-mystery-room-api
+    name: investigating-platform
     runtime: node
     region: singapore
     plan: free

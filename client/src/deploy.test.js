@@ -25,7 +25,7 @@ describe('vercel.json: routing', () => {
   });
 
   it('the API address is https and is the service named in render.yaml, keeping the path', () => {
-    const name = /name: (ai-mystery-room-api)/.exec(render)?.[1];
+    const name = /name: (investigating-platform)/.exec(render)?.[1];
     expect(name).toBeTruthy();
     expect(config.rewrites[0].destination).toBe(`https://${name}.onrender.com/api/:path*`);
   });

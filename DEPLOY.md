@@ -52,7 +52,7 @@ Do all three: they cost nothing and cover each other. Render's free plan gives 7
 
 ## 5. Vercel (the website, T-21)
 Do this **after** the Render service is up and its health check shows `db: "up"`.
-1. Check the address in `client/vercel.json`: the first rewrite sends `/api/*` to `https://ai-mystery-room-api.onrender.com`. That is the address Render gives a service named `ai-mystery-room-api`. If Render gave yours a different address (the name was taken, so it added letters), change that one line to your real address before deploying.
+1. Check the address in `client/vercel.json`: the first rewrite sends `/api/*` to `https://investigating-platform.onrender.com`, which is the address of the live service (verified: health shows the database up). Only change it if you ever move the service.
 2. Vercel → **Add New → Project** → import the repo → **Root Directory `client`** → Framework **Vite** (build `npm run build`, output `dist`).
 3. Environment variables (all public values; leave out any you do not use):
 

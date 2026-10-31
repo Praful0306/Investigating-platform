@@ -123,9 +123,9 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **Verify:** `cd server && npm test` · `cd client && npm test && npx playwright test` — all green.
 
 ## T-20 · Deploy backend
-- [ ] Skeleton deploy on D1 evening (health only), final deploy D2. Spec: `06-deploy.md` §2.
+- [x] Skeleton deploy on D1 evening (health only), final deploy D2. Spec: `06-deploy.md` §2.
 - **Verify:** `curl https://<service>.onrender.com/api/health` → `db: "up"`.
-- **Prepared (31 Oct), not deployed:** `render.yaml` (Blueprint), `DEPLOY.md` (Atlas + Render checklist), `server/scripts/smoke.mjs` (22 live checks), graceful shutdown and proxy keep-alive in `server/src/server-lifecycle.js`, rehearsed locally in production mode. **Remaining (needs the owner's accounts and the single final push):** create the Atlas cluster, deploy the Blueprint, set the secrets in Render, run the smoke test against the Render address, tick this box.
+- **DEPLOYED (31 Oct): https://investigating-platform.onrender.com** (health `db: up`; `server/scripts/smoke.mjs` 23/23 on easy, medium and hard against the real Gemini). Earlier note, kept for the record: `render.yaml` (Blueprint), `DEPLOY.md` (Atlas + Render checklist), `server/scripts/smoke.mjs` (22 live checks), graceful shutdown and proxy keep-alive in `server/src/server-lifecycle.js`, rehearsed locally in production mode. **Remaining (needs the owner's accounts and the single final push):** create the Atlas cluster, deploy the Blueprint, set the secrets in Render, run the smoke test against the Render address, tick this box.
 
 ## T-21 · Deploy frontend + smoke
 - [ ] `client/vercel.json`, Vercel project, env, rewrite. Spec: `06-deploy.md` §3–4.
