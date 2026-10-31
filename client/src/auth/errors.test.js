@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { authMessage } from './errors.js';
 
 describe('authMessage: Firebase error codes in plain words', () => {
@@ -16,6 +16,11 @@ describe('authMessage: Firebase error codes in plain words', () => {
     ['auth/operation-not-allowed', null, /isn't turned on/i],
     ['auth/account-exists-with-different-credential', 'email', /different sign-in method/i],
     ['auth/unavailable', null, /isn't set up/i],
+    ['auth/unauthorized-domain', null, /web address/i],
+    ['auth/invalid-api-key', null, /not set up correctly/i],
+    ['auth/api-key-not-valid.-please-pass-a-valid-api-key.', null, /not set up correctly/i],
+    ['auth/configuration-not-found', null, /not set up correctly/i],
+    ['auth/web-storage-unsupported', null, /site data|cookies/i],
   ])('%s -> field %s', (code, field, text) => {
     const out = authMessage({ code });
     expect(out.field).toBe(field);
@@ -44,6 +49,31 @@ describe('authMessage: Firebase error codes in plain words', () => {
     const out = authMessage(err);
     expect(out).toMatchObject({ field: null, silent: false });
     expect(out.message).toBe('Something went wrong. Please try again.');
+  });
+
+  it('still points the player to guest play when sign-in is misconfigured, and never exposes a key or project name', () => {
+    for (const code of ['auth/unauthorized-domain', 'auth/invalid-api-key', 'auth/configuration-not-found']) {
+      const { message } = authMessage({ code, message: 'Firebase: project investigating-platform apiKey=AIzaSECRET' });
+      expect(message).toMatch(/guest|try again later/i);
+      expect(message).not.toMatch(/AIza|investigating-platform|auth\//);
+    }
+  });
+
+  it('writes the code (only the code) to the console for an unknown failure, so a setup problem can be diagnosed', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    authMessage({ code: 'auth/something-new', message: 'secret details apiKey=AIzaSECRET' });
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0].join(' ')).toContain('auth/something-new');
+    expect(warn.mock.calls[0].join(' ')).not.toMatch(/AIza|secret details/);
+    warn.mockRestore();
+  });
+
+  it('stays quiet for failures the player caused (wrong password) and for closing the window', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    authMessage({ code: 'auth/invalid-credential' });
+    authMessage({ code: 'auth/popup-closed-by-user' });
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it('never shows raw codes or the SDK message', () => {

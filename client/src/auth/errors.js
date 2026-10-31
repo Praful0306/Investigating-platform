@@ -17,6 +17,12 @@ const MESSAGES = {
   'auth/user-disabled': { message: 'This account has been disabled.' },
   'auth/operation-not-allowed': { message: "This sign-in method isn't turned on yet." },
   'auth/account-exists-with-different-credential': { field: 'email', message: 'An account with that email already exists with a different sign-in method.' },
+  // setup problems (not the player's fault): say so plainly, without naming keys or projects
+  'auth/unauthorized-domain': { message: "Sign-in isn't turned on for this web address yet. You can still play as a guest." },
+  'auth/invalid-api-key': { message: "Sign-in is not set up correctly yet. You can still play as a guest." },
+  'auth/api-key-not-valid.-please-pass-a-valid-api-key.': { message: "Sign-in is not set up correctly yet. You can still play as a guest." },
+  'auth/configuration-not-found': { message: "Sign-in is not set up correctly yet. You can still play as a guest." },
+  'auth/web-storage-unsupported': { message: 'Your browser is blocking the site data that sign-in needs. Allow cookies and site data for this site, then try again.' },
   'auth/unavailable': { message: "Sign-in isn't set up on this site yet. You can still play as a guest." }, // ours: no sign-in service configured
 };
 const SILENT = new Set(['auth/popup-closed-by-user', 'auth/cancelled-popup-request']);
@@ -25,5 +31,7 @@ export function authMessage(err) {
   const code = typeof err?.code === 'string' ? err.code : '';
   if (SILENT.has(code)) return { field: null, message: '', silent: true };
   const known = MESSAGES[code];
+  // An unrecognised code is usually a setup problem; the code (never the SDK message) goes to the console to find it.
+  if (code && !known) console.warn(`Unrecognised sign-in error code: ${code}`);
   return { field: known?.field ?? null, message: known?.message ?? GENERIC, silent: false };
 }
