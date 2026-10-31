@@ -128,9 +128,9 @@ Suggested tool per task is a default — any tool can take any task if it reads 
 - **DEPLOYED (31 Oct): https://investigating-platform.onrender.com** (health `db: up`; `server/scripts/smoke.mjs` 23/23 on easy, medium and hard against the real Gemini). Earlier note, kept for the record: `render.yaml` (Blueprint), `DEPLOY.md` (Atlas + Render checklist), `server/scripts/smoke.mjs` (22 live checks), graceful shutdown and proxy keep-alive in `server/src/server-lifecycle.js`, rehearsed locally in production mode. **Remaining (needs the owner's accounts and the single final push):** create the Atlas cluster, deploy the Blueprint, set the secrets in Render, run the smoke test against the Render address, tick this box.
 
 ## T-21 · Deploy frontend + smoke
-- [ ] `client/vercel.json`, Vercel project, env, rewrite. Spec: `06-deploy.md` §3–4.
+- [x] `client/vercel.json`, Vercel project, env, rewrite. Spec: `06-deploy.md` §3–4.
 - **Verify:** smoke script passes for easy, medium, hard against the Vercel URL.
-- **Prepared (31 Oct), not deployed:** `client/vercel.json` (rewrites, security headers, long cache for `/assets`, report-only CSP), `DEPLOY.md` §5, rehearsed locally behind a production-mode API. **Remaining (needs the owner's Vercel account, the final push and a deployed backend):** deploy, set `CLIENT_URL` on Render to the Vercel address, run the smoke script against it for easy, medium and hard, tick this box.
+- **DEPLOYED (31 Oct): https://investigating-platform.vercel.app** (backend: https://investigating-platform.onrender.com). `server/scripts/smoke.mjs` run against the Vercel address: 23/23 on easy, medium and hard. Earlier note, kept for the record: `client/vercel.json` (rewrites, security headers, long cache for `/assets`, report-only CSP), `DEPLOY.md` §5, rehearsed locally behind a production-mode API. **Remaining (needs the owner's Vercel account, the final push and a deployed backend):** deploy, set `CLIENT_URL` on Render to the Vercel address, run the smoke script against it for easy, medium and hard, tick this box.
 
 ## T-22 · QA + submit
 - [ ] Manual QA script (`05-tests.md` §7) on production, fix blockers only.
