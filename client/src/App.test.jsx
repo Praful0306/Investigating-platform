@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AppRoutes, Providers } from './App.jsx';
 
@@ -43,7 +43,7 @@ describe('routes', () => {
     at(path);
     expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    expect(document.title).toBe(title);
+    await waitFor(() => expect(document.title).toBe(title));
   });
 
   it('every route sits inside the shared layout (nav, main, footer)', async () => {
@@ -65,6 +65,6 @@ describe('routes', () => {
     expect(await screen.findByRole('heading', { level: 1, name: /page not found/i })).toBeInTheDocument();
     const main = screen.getByRole('main');
     expect(within(main).getByRole('link', { name: /home/i })).toHaveAttribute('href', '/');
-    expect(document.title).toBe('Page not found · AI Mystery Room');
+    await waitFor(() => expect(document.title).toBe('Page not found · AI Mystery Room'));
   });
 });

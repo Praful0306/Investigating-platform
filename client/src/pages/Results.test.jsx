@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { Providers } from '../App.jsx';
@@ -66,7 +66,7 @@ describe('Results: the verdict', () => {
     show(created);
     expect(await loaded()).toHaveTextContent('Case closed — you got it!');
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    expect(document.title).toBe('Case result · AI Mystery Room');
+    await waitFor(() => expect(document.title).toBe('Case result · AI Mystery Room'));
     expect(document.querySelector('[data-stamp]')).toHaveTextContent('Solved');
     expect(document.querySelector('[data-stamp]')).toHaveAttribute('data-tone', 'success');
     expect(screen.getByText('The Silent Sitar')).toBeInTheDocument();

@@ -67,7 +67,7 @@ describe('loading and layout', () => {
     expect(screen.getByText(/Ravindra Music College/)).toBeInTheDocument();
     expect(stat('Hints used')).toHaveTextContent('0 / 2');
     expect(scoreEl()).toHaveTextContent(/^100$/);
-    expect(document.title).toBe('The Silent Sitar · AI Mystery Room');
+    await waitFor(() => expect(document.title).toBe('The Silent Sitar · AI Mystery Room'));
   });
 
   it('shows the story, 3 suspects and 5 face-down clues, and no clue text', async () => {

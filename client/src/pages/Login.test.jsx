@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, screen, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
 import { authError, DANA, fakeBackend, renderAuth } from '../test/auth.jsx';
@@ -35,7 +35,7 @@ describe('Login: the page', () => {
     open();
     await ready();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    expect(document.title).toBe('Sign in · AI Mystery Room');
+    await waitFor(() => expect(document.title).toBe('Sign in · AI Mystery Room'));
     expect(email()).toHaveAttribute('autocomplete', 'username');
     expect(password()).toHaveAttribute('autocomplete', 'current-password');
     expect(submit()).toBeInTheDocument();

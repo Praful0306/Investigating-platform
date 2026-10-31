@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
 import { Providers } from '../App.jsx';
@@ -36,10 +36,10 @@ beforeEach(() => { createCase.mockReset(); });
 afterEach(() => { vi.useRealTimers(); delete window.turnstile; });
 
 describe('the form', () => {
-  it('has one h1, a labelled premise box (max 300) and a Generate button', () => {
+  it('has one h1, a labelled premise box (max 300) and a Generate button', async () => {
     setup();
     expect(screen.getByRole('heading', { level: 1, name: 'Create a mystery' })).toBeInTheDocument();
-    expect(document.title).toBe('Create a mystery · AI Mystery Room');
+    await waitFor(() => expect(document.title).toBe('Create a mystery · AI Mystery Room'));
     expect(premiseBox()).toHaveAttribute('maxlength', '300');
     expect(generate()).toBeInTheDocument();
   });

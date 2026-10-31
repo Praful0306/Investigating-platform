@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { Providers } from '../App.jsx';
@@ -62,7 +62,7 @@ describe('Accusation: layout', () => {
     expect(screen.getByRole('status', { name: /loading case/i })).toBeInTheDocument();
     await loaded();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    expect(document.title).toBe('Make your accusation · AI Mystery Room');
+    await waitFor(() => expect(document.title).toBe('Make your accusation · AI Mystery Room'));
     const group = screen.getByRole('radiogroup', { name: /suspects/i });
     expect(within(group).getAllByRole('radio')).toHaveLength(3);
     for (const name of ['Meera Iyer', 'Arjun Rao', 'Kavya Nair']) expect(within(group).getByRole('radio', { name: new RegExp(name) })).toBeInTheDocument();

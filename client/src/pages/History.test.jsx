@@ -42,7 +42,7 @@ describe('History: the page', () => {
     open();
     await loaded();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    expect(document.title).toBe('My cases · AI Mystery Room');
+    await waitFor(() => expect(document.title).toBe('My cases · AI Mystery Room'));
   });
 
   it('shows a skeleton while the list loads', async () => {

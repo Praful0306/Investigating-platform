@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { setReducedMotion } from '../test/matchMedia.js';
@@ -15,12 +15,12 @@ beforeEach(() => { health.mockReset(); health.mockResolvedValue({ ok: true }); }
 afterEach(() => { vi.useRealTimers(); ScrollTrigger.getAll().forEach((t) => t.kill()); });
 
 describe('content (works with and without animation)', () => {
-  it('has exactly one h1: the tagline, with the brand as the eyebrow', () => {
+  it('has exactly one h1: the tagline, with the brand as the eyebrow', async () => {
     setup();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(screen.getByRole('heading', { level: 1 })).toHaveAccessibleName(/every case is new\.?\s*every culprit is hiding/i);
     expect(screen.getByText(/AI Mystery Room · Case file/)).toBeInTheDocument();
-    expect(document.title).toBe('AI Mystery Room — every case is new');
+    await waitFor(() => expect(document.title).toBe('AI Mystery Room — every case is new'));
   });
 
   it('the primary call to action goes to /create, and "How it works" jumps to its section', () => {
