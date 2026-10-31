@@ -85,3 +85,49 @@ describe('production imports', () => {
     }
   });
 });
+
+describe('keeping the free service awake', () => {
+  const workflow = readFileSync('../.github/workflows/keep-alive.yml', 'utf8');
+  const index = readFileSync('src/index.js', 'utf8');
+  const envSource = readFileSync('src/config/env.js', 'utf8');
+
+  it('the server pings itself only in production, only when Render has given it an address, and the switch can turn it off', () => {
+    expect(index).toMatch(/isProd && env\.KEEP_ALIVE === 'true' && env\.RENDER_EXTERNAL_URL/);
+    expect(envSource).toMatch(/KEEP_ALIVE: z\.enum\(\['true', 'false'\]\)\.default\('true'\)/);
+    expect(envSource).toMatch(/RENDER_EXTERNAL_URL/);
+  });
+
+  it('the self-ping is stopped when the server shuts down', () => {
+    expect(index).toMatch(/stopKeepAlive\(\);\s*shutdown\(signal\)/);
+  });
+
+  it('render.yaml does not need to set the address: Render provides RENDER_EXTERNAL_URL itself', () => {
+    expect(blueprint).not.toMatch(/RENDER_EXTERNAL_URL/);
+  });
+
+  it('a scheduled GitHub job asks for /api/health at least every 10 minutes (and can be run by hand)', () => {
+    const minutes = Number(/cron: '\*\/(\d+) \* \* \* \*'/.exec(workflow)?.[1]);
+    expect(minutes).toBeGreaterThan(0);
+    expect(minutes).toBeLessThanOrEqual(10);
+    expect(workflow).toMatch(/workflow_dispatch:/);
+    expect(workflow).toMatch(/\/api\/health/);
+  });
+
+  it('it takes the address from a repository variable (public), never a secret, and does nothing when it is unset', () => {
+    expect(workflow).toMatch(/vars\.KEEP_ALIVE_URL/);
+    expect(workflow).not.toMatch(/secrets\./);
+    expect(workflow).toMatch(/if \[ -z "\$URL" \]; then[^\n]*exit 0/);
+  });
+
+  it('the address reaches the command through an environment variable, not pasted into the script (no injection)', () => {
+    const run = /run: \|([\s\S]*)$/.exec(workflow)?.[1] ?? '';
+    expect(run).not.toMatch(/\$\{\{/);
+    expect(workflow).toMatch(/URL: \$\{\{ vars\.KEEP_ALIVE_URL \}\}/);
+  });
+
+  it('the job retries, has a time limit, and fails loudly if the API never answers', () => {
+    expect(workflow).toMatch(/curl -fsS --retry 3/);
+    expect(workflow).toMatch(/--max-time 90/);
+    expect(workflow).toMatch(/timeout-minutes: 5/);
+  });
+});

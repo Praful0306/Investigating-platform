@@ -2,6 +2,7 @@ import { env, isProd } from './config/env.js';
 import { connectDB } from './db/connect.js';
 import mongoose from 'mongoose';
 import { createApp } from './app.js';
+import { startKeepAlive } from './keep-alive.js';
 import { createShutdown, tuneServer } from './server-lifecycle.js';
 import { buildProvidersFromEnv, createAiService } from './services/ai/index.js';
 
@@ -36,9 +37,17 @@ const server = tuneServer(
   createApp({ ai: createAiService(providers) }).listen(env.PORT, () => console.log(`API listening on :${env.PORT} (${env.NODE_ENV})`)),
 );
 
+// A free Render service sleeps after 15 idle minutes. While it is awake it pings its own public address (which Render
+// provides as RENDER_EXTERNAL_URL) every 10 minutes, so visitors and examiners do not wait for a cold start.
+const stopKeepAlive = isProd && env.KEEP_ALIVE === 'true' && env.RENDER_EXTERNAL_URL ? startKeepAlive({ baseUrl: env.RENDER_EXTERNAL_URL }) : () => {};
+
 // Render stops the service with SIGTERM on every redeploy: finish running requests, close the database, then exit.
 const shutdown = createShutdown({ server, disconnect: () => mongoose.disconnect() });
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+for (const signal of ['SIGTERM', 'SIGINT']) {
+  process.on(signal, () => {
+    stopKeepAlive();
+    shutdown(signal);
+  });
+}
 // A bug in one request must be visible in the logs, not silently swallowed (only the message: never request data).
 process.on('unhandledRejection', (reason) => console.error(`Unhandled rejection: ${reason?.message ?? reason}`));

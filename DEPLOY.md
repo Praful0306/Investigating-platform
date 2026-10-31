@@ -34,8 +34,17 @@ node server/scripts/smoke.mjs https://<service>.onrender.com hard
 Each run makes **one** real AI call. 23 ticks = healthy. A ✗ names the problem (database down, missing security headers, a secret in a response, cookie not HttpOnly, someone else able to open the case, a second accusation accepted).
 Then in Render → Logs, make one request and read the `ip=` at the end of the line: it must be *your* IP. If every line shows the same address, change `TRUST_PROXY`.
 
+## 3b. Keeping the free service awake (examiners can open it at any time)
+A free Render service goes to sleep after **15 minutes** without requests, and the next visitor waits about a minute. A sleeping server cannot wake itself, so there are three layers:
+
+1. **Built in, nothing to do:** while the server is awake it asks its own public address for `/api/health` every 10 minutes (Render provides the address as `RENDER_EXTERNAL_URL`). It only runs in production and can be switched off with `KEEP_ALIVE=false`. Look for `Keep-alive: pinging https://… every 10 min` in Render's logs after a deploy.
+2. **GitHub, free, 1 minute to set up:** `.github/workflows/keep-alive.yml` asks for `/api/health` from outside every 10 minutes, which also wakes the server if it ever slept. In your GitHub repo: **Settings → Secrets and variables → Actions → Variables → New repository variable**, name `KEEP_ALIVE_URL`, value `https://<your-service>.onrender.com` (a variable, not a secret; the address is public). Then **Actions → Keep the API awake → Run workflow** once to test it. Until you add the variable the job just does nothing. GitHub may start these runs a few minutes late, and it switches scheduled jobs off on a public repo after 60 days without any repo activity.
+3. **A free monitor (recommended extra, the most reliable):** create a free account at uptimerobot.com → **Add New Monitor** → type *HTTP(s)* → URL `https://<your-app>.vercel.app/api/health` (the website address, so it also tests the whole path through Vercel) → interval **5 minutes**. It also emails you if the site goes down.
+
+Do all three: they cost nothing and cover each other. Render's free plan gives 750 running hours a month, enough for one service to stay up all month; check Render's current free-plan rules before relying on this. If it does sleep anyway, the website's Home page already shows a "waking up" message and wakes it.
+
 ## 4. Things that can still go wrong (and the fix)
-- **Free instance sleeps** after ~15 min idle (slow first request). The Home page already wakes it. For the grading window, ping `/api/health` every 10 minutes (cron-job.org, or a Cloudflare Worker cron).
+- **Free instance sleeps** after ~15 min idle (slow first request): see section 3b above.
 - **Gemini quota / 429**: the app shows a friendly message and retries on its own; a second provider (`AI_PROVIDERS=gemini,openai_compat` plus its three variables) is the fallback.
 - **Deploys cut a running generation?** No: on a redeploy the server finishes running requests (up to 25 s), then closes the database and exits.
 - **502s at random**: already handled (the server keeps idle connections open longer than Render's proxy).

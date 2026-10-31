@@ -18,6 +18,8 @@ const Env = z.object({
   TURNSTILE_SECRET: z.string().optional(),
   TRUST_PROXY: z.coerce.number().default(1),
   CROSS_SITE_COOKIES: z.enum(['true', 'false']).default('false'),
+  RENDER_EXTERNAL_URL: z.string().optional(), // set by Render itself: the service's public https address
+  KEEP_ALIVE: z.enum(['true', 'false']).default('true'), // 'false' turns the self-ping off
 });
 
 // Empty values in .env (e.g. `GEMINI_API_KEY=`) mean "unset".
